@@ -11,12 +11,6 @@ class VarsConfig extends StatefulWidget {
 class _VarsConfigState extends State<VarsConfig> {
   final TextEditingController _googleAppsScriptUrlController =
       TextEditingController(text: Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
-  @override
-  void initState() {
-    super.initState();
-    _googleAppsScriptUrlController.text =
-        Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI;
-  }
 
   @override
   void dispose() {
@@ -75,7 +69,7 @@ class _VarsConfigState extends State<VarsConfig> {
                 ? () async {
                     await Utils.prefs.setString(
                         Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY,
-                        Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
+                        _googleAppsScriptUrlController.text);
                     setState(() {
                       Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI =
                           _googleAppsScriptUrlController.text;

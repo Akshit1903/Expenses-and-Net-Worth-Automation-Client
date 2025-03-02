@@ -175,7 +175,9 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
             ),
             Text(_csvFilePath),
             ElevatedButton(
-              onPressed: (_isLoading || _csvFilePath == '')
+              onPressed: (Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty ||
+                      _isLoading ||
+                      _csvFilePath == '')
                   ? null
                   : () => _triggerAutomationButtonHandler(_csvFilePath),
               child: Text((_createSpreadSheetByUploadingCSVFileResponse == '{}')

@@ -3,22 +3,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Utils {
-  static Future<void> init() async {
-    _prefs = await SharedPreferencesWithCache.create(
-      cacheOptions: const SharedPreferencesWithCacheOptions(
-        allowList: <String>{EMAIL, EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY},
-      ),
-    );
-    _googleSignIn = GoogleSignIn(scopes: _SCOPES);
-    if (Utils.prefs.containsKey(Utils.EMAIL)) {
-      await Utils.googleSignIn.signInSilently();
-    }
-    if (Utils.prefs.containsKey(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)) {
-      EANW_AUTOMATION_APPS_SCRIPTS_URI =
-          Utils.prefs.getString(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)!;
-    }
-  }
-
   static const String CREATE_SPREADSHEET_BY_UPLOADING_CSV_FILE_URI =
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
   static const EMAIL = "email";
@@ -51,6 +35,22 @@ class Utils {
 
   static SharedPreferencesWithCache get prefs => _prefs;
   static GoogleSignIn get googleSignIn => _googleSignIn;
+
+  static Future<void> init() async {
+    _prefs = await SharedPreferencesWithCache.create(
+      cacheOptions: const SharedPreferencesWithCacheOptions(
+        allowList: <String>{EMAIL, EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY},
+      ),
+    );
+    _googleSignIn = GoogleSignIn(scopes: _SCOPES);
+    if (Utils.prefs.containsKey(Utils.EMAIL)) {
+      await Utils.googleSignIn.signInSilently();
+    }
+    if (Utils.prefs.containsKey(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)) {
+      EANW_AUTOMATION_APPS_SCRIPTS_URI = await Utils.prefs
+          .getString(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)!;
+    }
+  }
 
   static snackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
