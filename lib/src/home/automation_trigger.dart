@@ -187,7 +187,10 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
             CustomTextField(
                 hintText: 'Enter Sheets URL',
                 controller: _spreadSheetUrlController),
+            Text(
+                "Sheets ID: ${Utils.extractSheetsId(_spreadSheetUrlController.text)}"),
             SizedBox(height: 16),
+            if (_isLoading) LinearProgressIndicator(),
             ElevatedButton(
               onPressed: (Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty ||
                       _isLoading ||

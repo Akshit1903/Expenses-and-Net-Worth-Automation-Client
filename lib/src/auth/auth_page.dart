@@ -23,7 +23,7 @@ class AuthPage extends StatelessWidget {
               Icon(Icons.currency_rupee_sharp, size: 100, color: Colors.white),
               SizedBox(height: 20),
               Text(
-                "Net Worth & Expenses Automation",
+                "Expenses & Net Worth Automation",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

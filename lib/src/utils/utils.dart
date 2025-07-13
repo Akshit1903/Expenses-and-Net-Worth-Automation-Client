@@ -108,6 +108,8 @@ class Utils {
   static String extractSheetsId(String url) {
     final regex = RegExp(r'/d/([a-zA-Z0-9-_]+)');
     final match = regex.firstMatch(url);
-    return match != null ? match.group(1).toString() : "";
+    return (match != null && match.group(1) != null)
+        ? match.group(1).toString()
+        : "";
   }
 }
