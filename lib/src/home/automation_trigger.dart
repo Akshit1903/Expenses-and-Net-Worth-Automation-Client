@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
+import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
 import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,7 +34,6 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
   bool _isLoading = false;
   String _csvFilePath = '';
   String _createSpreadSheetByUploadingCSVFileResponse = '{}';
-  String _spreadSheetUrl = '';
   String _appsScriptResponse = '{}';
   List<List<String>> _unprocessedTransactions = [];
 
@@ -53,6 +53,8 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
                 )),
             child: JsonView(json: jsonDecode(jsonString))),
       );
+
+  TextEditingController _spreadSheetUrlController = TextEditingController();
 
   late GcpClient _gcpClient;
 
@@ -84,6 +86,10 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
       _setFilePath(value);
       ReceiveSharingIntent.instance.reset();
     });
+
+    _spreadSheetUrlController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -103,21 +109,24 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
       _isLoading = true;
     });
     try {
-      String response = _createSpreadSheetByUploadingCSVFileResponse;
-      if (response == '{}') {
-        response =
+      if (_spreadSheetUrlController.text.isEmpty) {
+        String response =
             await _gcpClient.createSpreadSheetByUploadingCSVFile(filePath);
+        setState(() {
+          _createSpreadSheetByUploadingCSVFileResponse = response;
+          String spreadSheetId =
+              jsonDecode(_createSpreadSheetByUploadingCSVFileResponse)['id'];
+          _spreadSheetUrlController.text =
+              Utils.getGoogleSheetsUrl(spreadSheetId);
+        });
       }
-      setState(() {
-        _createSpreadSheetByUploadingCSVFileResponse = response;
-        _spreadSheetUrl =
-            "https://docs.google.com/spreadsheets/d/${jsonDecode(_createSpreadSheetByUploadingCSVFileResponse)['id']}/edit?usp=sharing";
-      });
-      await Clipboard.setData(ClipboardData(text: _spreadSheetUrl));
-      final String _spreadSheetId =
-          jsonDecode(_createSpreadSheetByUploadingCSVFileResponse)['id'];
-      response = await _gcpClient
-          .triggerExpenseAndNetWorthAutomationAppsScript(_spreadSheetId);
+      await Clipboard.setData(
+          ClipboardData(text: _spreadSheetUrlController.text));
+
+      String spreadSheetId =
+          Utils.extractSheetsId(_spreadSheetUrlController.text);
+      String response = await _gcpClient
+          .triggerExpenseAndNetWorthAutomationAppsScript(spreadSheetId);
       setState(() {
         _appsScriptResponse = response;
         _unprocessedTransactions = _getUnprocessedTransactions(
@@ -152,7 +161,7 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
   }
 
   Future<void> _launchSheet() async {
-    Uri url = Uri.parse(_spreadSheetUrl);
+    Uri url = Uri.parse(_spreadSheetUrlController.text);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       Utils.snackbar(context, 'Could not open the sheet');
     }
@@ -174,10 +183,16 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
               child: const Text('Select CSV File'),
             ),
             Text(_csvFilePath),
+            SizedBox(height: 16),
+            CustomTextField(
+                hintText: 'Enter Sheets URL',
+                controller: _spreadSheetUrlController),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: (Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty ||
                       _isLoading ||
-                      _csvFilePath == '')
+                      (_csvFilePath == '' &&
+                          _spreadSheetUrlController.text.isEmpty))
                   ? null
                   : () => _triggerAutomationButtonHandler(_csvFilePath),
               child: Text((_createSpreadSheetByUploadingCSVFileResponse == '{}')
@@ -195,7 +210,7 @@ class _AutomationTriggerState extends State<AutomationTrigger> {
               ElevatedButton(
                   onPressed: () => Navigator.of(context).pushNamed(
                       UnprocessedTransactionsPage.routeName,
-                      arguments: _unprocessedTransactions),
+                      arguments: _unprocessedTransactions.sublist(1)),
                   child: Text(
                       "Unprocessed Transactions(${_unprocessedTransactions.length})")),
           ]),

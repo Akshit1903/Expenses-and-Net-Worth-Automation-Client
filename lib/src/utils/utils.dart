@@ -100,4 +100,14 @@ class Utils {
       },
     );
   }
+
+  static String getGoogleSheetsUrl(String sheetId) {
+    return "https://docs.google.com/spreadsheets/d/$sheetId/edit?usp=sharing";
+  }
+
+  static String extractSheetsId(String url) {
+    final regex = RegExp(r'/d/([a-zA-Z0-9-_]+)');
+    final match = regex.firstMatch(url);
+    return match != null ? match.group(1).toString() : "";
+  }
 }

@@ -42,7 +42,7 @@ launcher_name:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/icon.png"
+  image_path: "assets/images/icon2.jpg"
 
   flutter_lints: ^5.0.0
 

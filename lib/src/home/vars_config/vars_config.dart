@@ -1,3 +1,4 @@
+import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
 
@@ -11,6 +12,15 @@ class VarsConfig extends StatefulWidget {
 class _VarsConfigState extends State<VarsConfig> {
   final TextEditingController _googleAppsScriptUrlController =
       TextEditingController(text: Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
+
+  @override
+  void initState() {
+    super.initState();
+
+    _googleAppsScriptUrlController.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -45,23 +55,9 @@ class _VarsConfigState extends State<VarsConfig> {
             style: TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 16),
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Enter Google Apps Script URL',
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey),
-              ),
-              contentPadding:
-                  EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-            ),
+          CustomTextField(
+            hintText: 'Enter Google Apps Script URL',
             controller: _googleAppsScriptUrlController,
-            onChanged: (value) {
-              setState(() {});
-            },
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -73,9 +69,9 @@ class _VarsConfigState extends State<VarsConfig> {
                     setState(() {
                       Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI =
                           _googleAppsScriptUrlController.text;
-
                       Utils.snackbar(context, "Script URL Updated");
                     });
+                    Navigator.pop(context);
                   }
                 : null,
             child: const Text('Save'),
