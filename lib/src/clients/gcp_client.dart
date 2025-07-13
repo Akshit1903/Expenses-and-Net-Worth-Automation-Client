@@ -16,7 +16,6 @@ class GcpClient {
       'Authorization': 'Bearer ${await _authProvider.getAccessToken}',
       'Content-Type': 'application/json'
     };
-    print(headers["Authorization"]);
     var body = json.encode({
       "function": "createRecurringExpensesSheet",
       "parameters": [spreadSheetId]
