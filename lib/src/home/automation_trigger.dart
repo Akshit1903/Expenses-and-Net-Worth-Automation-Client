@@ -23,10 +23,12 @@ class AutomationTrigger extends StatefulWidget {
   State<AutomationTrigger> createState() => _AutomationTriggerState();
 }
 
-List<List<String>> _getUnprocessedTransactions(String unprocessedTransactions) {
-  return unprocessedTransactions
-      .split('#?@#')
-      .map((e) => e.split('@-@'))
+List<List<String>> _getUnprocessedTransactions(
+    String unprocessedTransactionsResponse) {
+  final jsonResponse = jsonDecode(unprocessedTransactionsResponse);
+  return (jsonResponse['unprocessedTransactions'] as List)
+      .map<List<String>>((row) =>
+          (row as List).map<String>((item) => item.toString()).toList())
       .toList();
 }
 
