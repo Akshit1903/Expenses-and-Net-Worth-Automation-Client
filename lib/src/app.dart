@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'settings/settings_controller.dart';
-import 'home/home_page.dart';
+import 'home/main_scaffold.dart';
+
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -53,8 +54,11 @@ class MyApp extends StatelessWidget {
             // Define a light and dark color theme. Then, read the user's
             // preferred ThemeMode (light, dark, or system default) from the
             // SettingsController to display the correct theme.
-            theme: ThemeData(),
-            darkTheme: ThemeData.dark(),
+            theme: ThemeData(
+              useMaterial3: true,
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            ),
+            darkTheme: ThemeData.dark(useMaterial3: true),
             themeMode: settingsController.themeMode,
 
             // Define a function to handle named routes in order to support
@@ -71,8 +75,8 @@ class MyApp extends StatelessWidget {
                             return AuthPage();
                           }
                           switch (routeSettings.name) {
-                            case HomePage.routeName:
-                              return HomePage();
+                            case MainScaffold.routeName:
+                              return MainScaffold();
                             case SettingsView.routeName:
                               return SettingsView(
                                   controller: settingsController);
@@ -81,7 +85,7 @@ class MyApp extends StatelessWidget {
                             case VarsConfigPage.routeName:
                               return VarsConfigPage();
                             default:
-                              return HomePage();
+                              return MainScaffold();
                           }
                         }
                         return const Scaffold(
