@@ -3,7 +3,6 @@ import 'package:expense_and_net_worth_automation/src/home/investment_page.dart';
 import 'package:expense_and_net_worth_automation/src/home/net_worth_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
-import 'package:expense_and_net_worth_automation/src/home/vars_config/vars_config_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -26,6 +25,10 @@ class _MainScaffoldState extends State<MainScaffold> {
   ];
 
   void _onItemTapped(int index) {
+    if (index == 3) {
+      Navigator.pushNamed(context, SettingsView.routeName);
+      return;
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -38,14 +41,6 @@ class _MainScaffoldState extends State<MainScaffold> {
         title: const Text('Finance'),
         centerTitle: true,
         actions: [
-          IconButton(
-            onPressed: () async {
-              await Navigator.pushNamed(context, VarsConfigPage.routeName);
-              setState(() {});
-            },
-            icon: const Icon(Icons.edit),
-            tooltip: 'Configure Variables',
-          ),
           IconButton(
             onPressed: () {
               Navigator.pushNamed(context, SettingsView.routeName);
@@ -78,6 +73,10 @@ class _MainScaffoldState extends State<MainScaffold> {
           NavigationDestination(
             icon: Icon(Icons.show_chart),
             label: 'Investment',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

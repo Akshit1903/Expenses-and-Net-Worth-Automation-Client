@@ -1,6 +1,5 @@
 import 'package:expense_and_net_worth_automation/src/auth/auth_page.dart';
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
-import 'package:expense_and_net_worth_automation/src/home/vars_config/vars_config_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:provider/provider.dart';
 
 import 'settings/settings_controller.dart';
 import 'home/main_scaffold.dart';
-
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
@@ -82,8 +80,6 @@ class MyApp extends StatelessWidget {
                                   controller: settingsController);
                             case UnprocessedTransactionsPage.routeName:
                               return UnprocessedTransactionsPage();
-                            case VarsConfigPage.routeName:
-                              return VarsConfigPage();
                             default:
                               return MainScaffold();
                           }
