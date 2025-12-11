@@ -1,4 +1,4 @@
-import 'package:expense_and_net_worth_automation/src/home/vars_config/vars_config.dart';
+import 'package:expense_and_net_worth_automation/src/settings/vars_config.dart';
 import 'package:flutter/material.dart';
 
 import 'settings_controller.dart';

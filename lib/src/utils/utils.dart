@@ -3,8 +3,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Utils {
-  static const String CREATE_SPREADSHEET_BY_UPLOADING_CSV_FILE_URI =
+  static const String UPLOAD_DOCUMENT_TO_DRIVE_URI =
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
   static const EMAIL = "email";
   static const _SCOPES = [
     "https://www.googleapis.com/auth/script.projects",

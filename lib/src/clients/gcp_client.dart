@@ -2,14 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class GcpClient {
   final AuthProvider _authProvider;
   GcpClient(this._authProvider);
+
   Future<String> triggerExpenseAndNetWorthAutomationAppsScript(
       String spreadSheetId) async {
-    print('Triggering Expense and Net Worth Automation Apps Script');
     final Uri uri = Uri.parse(Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
 
     var headers = {
@@ -55,10 +56,91 @@ $fileContents
 --boundary_string--''';
 
     final response = await http.post(
-      Uri.parse(Utils.CREATE_SPREADSHEET_BY_UPLOADING_CSV_FILE_URI),
+      Uri.parse(Utils.UPLOAD_DOCUMENT_TO_DRIVE_URI),
       headers: headers,
       body: body,
     );
     return response.body;
+  }
+
+  Future<String?> uploadDocument({
+    required String path,
+    required String fileName,
+    required String folderId,
+    required BuildContext context,
+  }) async {
+    final uri = Uri.parse(
+      Utils.UPLOAD_DOCUMENT_TO_DRIVE_URI,
+    );
+
+    final request = http.MultipartRequest("POST", uri);
+
+    // Set auth header
+    request.headers["Authorization"] =
+        "Bearer ${await _authProvider.getAccessToken}";
+
+    // --- Metadata part ---
+    final metadataJson = '''
+  {
+    "name": "$fileName",
+    "parents": ["$folderId"]
+  }
+  ''';
+
+    request.files.add(
+      http.MultipartFile.fromString(
+        'metadata',
+        metadataJson,
+      ),
+    );
+
+    // --- File part ---
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        path,
+      ),
+    );
+
+    // Send request
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final body = await response.stream.bytesToString();
+      final jsonResponse = jsonDecode(body);
+      return jsonResponse["id"];
+    } else {
+      final body = await response.stream.bytesToString();
+      Utils.snackbar(
+          context, "Failed to upload document: ${response.statusCode}: $body");
+      return null;
+    }
+  }
+
+  Future<String?> getAccountStatementFolderId(
+      String accountId, BuildContext context) async {
+    try {
+      final Uri uri = Uri.parse("");
+
+      var headers = {
+        'Authorization': 'Bearer ${await _authProvider.getAccessToken}',
+        'Content-Type': 'application/json'
+      };
+      var body = json.encode({
+        "function": "getAccountStatementFolderId",
+        "parameters": [accountId]
+      });
+
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: body,
+      );
+      final jsonResponse = jsonDecode(response.body);
+      return jsonResponse["response"]["result"];
+    } catch (e) {
+      Utils.snackbar(context, "Error getting folder ID: $e");
+      return null;
+    }
   }
 }

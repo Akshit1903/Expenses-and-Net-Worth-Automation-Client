@@ -1,4 +1,4 @@
-import 'package:expense_and_net_worth_automation/src/home/expenses_page.dart';
+import 'package:expense_and_net_worth_automation/src/home/expenses/expenses_page.dart';
 import 'package:expense_and_net_worth_automation/src/home/investment_page.dart';
 import 'package:expense_and_net_worth_automation/src/home/net_worth_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
