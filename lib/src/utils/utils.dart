@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Utils {
+  static const String EANW_AUTOMATION = 'EANW_AUTOMATION';
   static const String UPLOAD_DOCUMENT_TO_DRIVE_URI =
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
@@ -28,8 +29,11 @@ class Utils {
   ];
   static const EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY =
       "EANW_AUTOMATION_APPS_SCRIPTS_URI";
-
   static String EANW_AUTOMATION_APPS_SCRIPTS_URI = "";
+
+  static const STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY =
+      "STATE_CONFIG_APPS_SCRIPT";
+  static String STATE_CONFIG_APPS_SCRIPT_URI = "";
 
   static late GoogleSignIn _googleSignIn;
   static late SharedPreferencesWithCache _prefs;
@@ -40,21 +44,23 @@ class Utils {
   static Future<void> init() async {
     _prefs = await SharedPreferencesWithCache.create(
       cacheOptions: const SharedPreferencesWithCacheOptions(
-        allowList: <String>{EMAIL, EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY},
+        allowList: <String>{EMAIL, STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY},
       ),
     );
     _googleSignIn = GoogleSignIn(scopes: _SCOPES);
     if (Utils.prefs.containsKey(Utils.EMAIL)) {
       await Utils.googleSignIn.signInSilently();
     }
-    if (Utils.prefs.containsKey(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)) {
-      EANW_AUTOMATION_APPS_SCRIPTS_URI = await Utils.prefs
-          .getString(EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY)!;
+    if (Utils.prefs.containsKey(STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY)) {
+      STATE_CONFIG_APPS_SCRIPT_URI =
+          await Utils.prefs.getString(STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY)!;
     }
+    // EANW_AUTOMATION_APPS_SCRIPTS_URI =
   }
 
   static snackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      duration: Duration(seconds: 20),
       content: Text(message),
     ));
   }

@@ -11,7 +11,7 @@ class VarsConfig extends StatefulWidget {
 
 class _VarsConfigState extends State<VarsConfig> {
   final TextEditingController _googleAppsScriptUrlController =
-      TextEditingController(text: Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
+      TextEditingController(text: Utils.STATE_CONFIG_APPS_SCRIPT_URI);
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _VarsConfigState extends State<VarsConfig> {
   }
 
   bool _isSaveButtonEnabled() {
-    return Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI !=
+    return Utils.STATE_CONFIG_APPS_SCRIPT_URI !=
         _googleAppsScriptUrlController.text;
   }
 
@@ -51,12 +51,12 @@ class _VarsConfigState extends State<VarsConfig> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Google Apps Script URL",
+            "State Config Script URL",
             style: TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 16),
           CustomTextField(
-            hintText: 'Enter Google Apps Script URL',
+            hintText: 'Enter State Config Script URL',
             controller: _googleAppsScriptUrlController,
           ),
           const SizedBox(height: 16),
@@ -64,12 +64,13 @@ class _VarsConfigState extends State<VarsConfig> {
             onPressed: _isSaveButtonEnabled()
                 ? () async {
                     await Utils.prefs.setString(
-                        Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY,
+                        Utils.STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY,
                         _googleAppsScriptUrlController.text);
                     setState(() {
-                      Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI =
+                      Utils.STATE_CONFIG_APPS_SCRIPT_URI =
                           _googleAppsScriptUrlController.text;
-                      Utils.snackbar(context, "Script URL Updated");
+                      Utils.snackbar(
+                          context, "State Config Script URL Updated");
                     });
                     Navigator.pop(context);
                   }

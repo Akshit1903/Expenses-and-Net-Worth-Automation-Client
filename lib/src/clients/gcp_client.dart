@@ -9,6 +9,35 @@ class GcpClient {
   final AuthProvider _authProvider;
   GcpClient(this._authProvider);
 
+  Future<String?> _getStateConfigVar(String functionName, String stateVarId,
+      [BuildContext? context = null, String errorMessagePrefix = ""]) async {
+    try {
+      final Uri uri = Uri.parse(Utils.STATE_CONFIG_APPS_SCRIPT_URI);
+
+      var headers = {
+        'Authorization': 'Bearer ${await _authProvider.getAccessToken}',
+        'Content-Type': 'application/json'
+      };
+      var body = json.encode({
+        "function": "$functionName",
+        "parameters": [stateVarId]
+      });
+
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: body,
+      );
+      final jsonResponse = jsonDecode(response.body);
+      return jsonResponse["response"]["result"];
+    } catch (e) {
+      if (context != null) {
+        Utils.snackbar(context, "$errorMessagePrefix $e");
+      }
+      return null;
+    }
+  }
+
   Future<String> triggerExpenseAndNetWorthAutomationAppsScript(
       String spreadSheetId) async {
     final Uri uri = Uri.parse(Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI);
@@ -117,30 +146,14 @@ $fileContents
     }
   }
 
-  Future<String?> getAccountStatementFolderId(
-      String accountId, BuildContext context) async {
-    try {
-      final Uri uri = Uri.parse("");
+  Future<String?> getDocumentFolderId(
+      String documentId, BuildContext context) async {
+    return _getStateConfigVar("getAccountStatementFolderId", documentId,
+        context, "Error getting folder ID:");
+  }
 
-      var headers = {
-        'Authorization': 'Bearer ${await _authProvider.getAccessToken}',
-        'Content-Type': 'application/json'
-      };
-      var body = json.encode({
-        "function": "getAccountStatementFolderId",
-        "parameters": [accountId]
-      });
-
-      final response = await http.post(
-        uri,
-        headers: headers,
-        body: body,
-      );
-      final jsonResponse = jsonDecode(response.body);
-      return jsonResponse["response"]["result"];
-    } catch (e) {
-      Utils.snackbar(context, "Error getting folder ID: $e");
-      return null;
-    }
+  Future<String?> getAppsScriptClientUrl(BuildContext context) async {
+    return _getStateConfigVar("getAppsScriptClientUrl", Utils.EANW_AUTOMATION,
+        context, "Error getting apps script URL:");
   }
 }

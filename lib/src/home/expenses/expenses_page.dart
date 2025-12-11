@@ -84,7 +84,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _gcpClient = GcpClient(context.read<AuthProvider>());
+    _getGcpClientAndSetAppsScriptUrl();
   }
 
   @override
@@ -92,6 +92,19 @@ class _ExpensesPageState extends State<ExpensesPage> {
     _intentSub.cancel();
     _spreadSheetUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getGcpClientAndSetAppsScriptUrl() async {
+    _gcpClient = GcpClient(context.read<AuthProvider>());
+    String? appsScriptUrl = await _gcpClient.getAppsScriptClientUrl(context);
+    if (appsScriptUrl != null &&
+        Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty) {
+      if (mounted) {
+        setState(() {
+          Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI = appsScriptUrl;
+        });
+      }
+    }
   }
 
   List<List<String>> _getUnprocessedTransactions(
@@ -147,8 +160,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
           setState(() {
             document.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
           });
-          String? folderId = await _gcpClient.getAccountStatementFolderId(
-              document.id, context);
+          String? folderId =
+              await _gcpClient.getDocumentFolderId(document.id, context);
           if (folderId == null) {
             setState(() {
               document.uploadStatus = UploadStatus.FAILURE;
