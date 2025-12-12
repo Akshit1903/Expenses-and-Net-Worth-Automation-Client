@@ -255,12 +255,13 @@ class _ExpensesPageState extends State<ExpensesPage> {
     bool isSelected =
         path != null && uploadDocument.uploadStatus == UploadStatus.SELECTED;
 
-    Icon resolveIcon() {
-      return uploadDocument.uploadStatus.icon;
-    }
-
-    void resolveOnTapHandler() {
+    void resolveOnTapHandler() async {
       switch (uploadDocument.uploadStatus) {
+        case UploadStatus.SUCCESS:
+          String fileIdUrl =
+              Utils.resolveDriveFileUrl(uploadDocument.uploadedFileId);
+          await Clipboard.setData(ClipboardData(text: fileIdUrl));
+          Utils.snackbar(context, 'Drive file URL copied: $fileIdUrl');
         case UploadStatus.QUEUED || UploadStatus.UPLOADING:
           return;
         case UploadStatus.SELECTED:
@@ -316,7 +317,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        trailing: resolveIcon(),
+        trailing: uploadDocument.uploadStatus.icon,
         onTap: resolveOnTapHandler,
       ),
     );

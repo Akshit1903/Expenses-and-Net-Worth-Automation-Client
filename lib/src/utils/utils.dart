@@ -60,7 +60,6 @@ class Utils {
 
   static snackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      duration: Duration(seconds: 20),
       content: Text(message),
     ));
   }
@@ -118,5 +117,12 @@ class Utils {
     return (match != null && match.group(1) != null)
         ? match.group(1).toString()
         : "";
+  }
+
+  static String resolveDriveFileUrl(String? fileId) {
+    if (fileId == null || fileId.isEmpty) {
+      return "File ID is null or empty";
+    }
+    return "https://drive.google.com/file/d/$fileId/view?usp=sharing";
   }
 }
