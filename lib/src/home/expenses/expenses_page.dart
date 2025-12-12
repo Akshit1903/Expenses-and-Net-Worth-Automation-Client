@@ -165,6 +165,30 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
       for (final UploadDocument document in documentsToUpload) {
         if (document.path != null) {
+          // Check for password protected PDF
+          setState(() {
+            document.uploadStatus = UploadStatus.DECRYPTING;
+          });
+          if (document.path!.toLowerCase().endsWith('.pdf') &&
+              await Utils.isPdfEncrypted(document.path!)) {
+            try {
+              String? password =
+                  await _gcpClient.getDocumentPassword(document.id, context);
+              if (password == null || password.isEmpty) {
+                throw 'Password not found';
+              }
+              document.path =
+                  await Utils.getDecryptedPdf(document.path!, password);
+            } catch (e) {
+              Utils.snackbar(
+                  context, 'Failed to decrypt PDF for ${document.title}: $e');
+              setState(() {
+                document.uploadStatus = UploadStatus.FAILURE;
+              });
+              continue;
+            }
+          }
+
           setState(() {
             document.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
           });
@@ -262,7 +286,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
               Utils.resolveDriveFileUrl(uploadDocument.uploadedFileId);
           await Clipboard.setData(ClipboardData(text: fileIdUrl));
           Utils.snackbar(context, 'Drive file URL copied: $fileIdUrl');
-        case UploadStatus.QUEUED || UploadStatus.UPLOADING:
+        case UploadStatus.NOT_INITIATED || UploadStatus.FAILURE:
+          _pickDocument(uploadDocument);
           return;
         case UploadStatus.SELECTED:
           setState(() {
@@ -270,7 +295,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
           });
           return;
         default:
-          _pickDocument(uploadDocument);
+          return;
       }
     }
 
@@ -282,6 +307,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
           return path!.split(Platform.pathSeparator).last;
         case UploadStatus.QUEUED:
           return 'Upload Queued';
+        case UploadStatus.DECRYPTING:
+          return 'Decrypting...';
         case UploadStatus.RESOLVE_FOLDER_ID:
           return 'Resolving Folder ID...';
         case UploadStatus.UPLOADING:

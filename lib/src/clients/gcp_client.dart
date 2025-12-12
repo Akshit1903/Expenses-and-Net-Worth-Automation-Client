@@ -149,11 +149,17 @@ $fileContents
   Future<String?> getDocumentFolderId(
       String documentId, BuildContext context) async {
     return _getStateConfigVar("getAccountStatementFolderId", documentId,
-        context, "Error getting folder ID:");
+        context, "Error getting folder ID: $documentId");
   }
 
   Future<String?> getAppsScriptClientUrl(BuildContext context) async {
     return _getStateConfigVar("getAppsScriptClientUrl", Utils.EANW_AUTOMATION,
         context, "Error getting apps script URL:");
+  }
+
+  Future<String?> getDocumentPassword(
+      String documentId, BuildContext context) async {
+    return _getStateConfigVar("getDocumentPassword", documentId, context,
+        "Error getting document password for: $documentId");
   }
 }

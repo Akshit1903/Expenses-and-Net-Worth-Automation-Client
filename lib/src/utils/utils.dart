@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class Utils {
   static const String EANW_AUTOMATION = 'EANW_AUTOMATION';
@@ -27,13 +31,14 @@ class Utils {
     'November',
     'December'
   ];
-  static const EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY =
-      "EANW_AUTOMATION_APPS_SCRIPTS_URI";
-  static String EANW_AUTOMATION_APPS_SCRIPTS_URI = "";
 
   static const STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY =
       "STATE_CONFIG_APPS_SCRIPT";
   static String STATE_CONFIG_APPS_SCRIPT_URI = "";
+
+  static const EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY =
+      "EANW_AUTOMATION_APPS_SCRIPTS_URI";
+  static String EANW_AUTOMATION_APPS_SCRIPTS_URI = "";
 
   static final ValueNotifier<List<String>> snackbarHistory =
       ValueNotifier<List<String>>([]);
@@ -131,5 +136,35 @@ class Utils {
       return "File ID is null or empty";
     }
     return "https://drive.google.com/file/d/$fileId/view?usp=sharing";
+  }
+
+  static Future<bool> isPdfEncrypted(String filePath) async {
+    final file = File(filePath);
+    List<int> bytes = await file.readAsBytes();
+    try {
+      PdfDocument document = PdfDocument(inputBytes: bytes);
+      document.dispose();
+      return false;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  static Future<String> getDecryptedPdf(
+      String filePath, String password) async {
+    final file = File(filePath);
+    List<int> bytes = await file.readAsBytes();
+    PdfDocument document = PdfDocument(inputBytes: bytes, password: password);
+    // Remove password protection
+    document.security.userPassword = '';
+    document.security.ownerPassword = '';
+
+    final directory = await getTemporaryDirectory();
+    final tempPath =
+        '${directory.path}/${filePath.split(Platform.pathSeparator).last}';
+    final tempFile = File(tempPath);
+    await tempFile.writeAsBytes(await document.save());
+    document.dispose();
+    return tempPath;
   }
 }

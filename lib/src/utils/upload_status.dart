@@ -4,6 +4,7 @@ enum UploadStatus {
   NOT_INITIATED(Icon(Icons.upload_file)),
   SELECTED(Icon(Icons.close)),
   QUEUED(Icon(Icons.hourglass_bottom_rounded)),
+  DECRYPTING(Icon(Icons.lock_open_rounded)),
   RESOLVE_FOLDER_ID(Icon(Icons.drive_folder_upload_rounded)),
   UPLOADING(Icon(Icons.upload_rounded)),
   SUCCESS(Icon(Icons.check_circle, color: Colors.green)),
