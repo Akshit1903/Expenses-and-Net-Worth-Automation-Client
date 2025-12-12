@@ -25,7 +25,10 @@ class ExpensesPage extends StatefulWidget {
 }
 
 class _ExpensesPageState extends State<ExpensesPage> {
-  bool _isLoading = false;
+  // loading vars
+  bool _isUploadingCSVToCreateSheet = false;
+  bool _isRunningAppsScriptAutomation = false;
+
   String _csvFilePath = '';
   String _createSpreadSheetByUploadingCSVFileResponse = '{}';
   String _appsScriptResponse = '{}';
@@ -117,11 +120,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   Future<void> _triggerAutomationButtonHandler() async {
-    setState(() {
-      _isLoading = true;
-    });
     try {
       if (_spreadSheetUrlController.text.isEmpty && !_csvFilePath.isEmpty) {
+        setState(() {
+          _isUploadingCSVToCreateSheet = true;
+        });
         String response =
             await _gcpClient.createSpreadSheetByUploadingCSVFile(_csvFilePath);
         setState(() {
@@ -130,20 +133,25 @@ class _ExpensesPageState extends State<ExpensesPage> {
               jsonDecode(_createSpreadSheetByUploadingCSVFileResponse)['id'];
           _spreadSheetUrlController.text =
               Utils.getGoogleSheetsUrl(spreadSheetId);
+          _isUploadingCSVToCreateSheet = false;
         });
       }
       if (!_spreadSheetUrlController.text.isEmpty) {
         await Clipboard.setData(
             ClipboardData(text: _spreadSheetUrlController.text));
-
         String spreadSheetId =
             Utils.extractSheetsId(_spreadSheetUrlController.text);
+
+        setState(() {
+          _isRunningAppsScriptAutomation = true;
+        });
         String response = await _gcpClient
             .triggerExpenseAndNetWorthAutomationAppsScript(spreadSheetId);
         setState(() {
           _appsScriptResponse = response;
           _unprocessedTransactions = _getUnprocessedTransactions(
               jsonDecode(_appsScriptResponse)['response']['result']);
+          _isRunningAppsScriptAutomation = false;
         });
       }
 
@@ -196,9 +204,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
     } catch (e) {
       Utils.snackbar(context, 'Error: ${e.toString()}');
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   Future<void> _pickCSVFile() async {
@@ -359,6 +364,20 @@ class _ExpensesPageState extends State<ExpensesPage> {
     return false;
   }
 
+  bool get _isLoading {
+    if (_isUploadingCSVToCreateSheet || _isRunningAppsScriptAutomation) {
+      return true;
+    }
+    for (final UploadDocument document in documentsToUpload) {
+      if (document.uploadStatus == UploadStatus.QUEUED ||
+          document.uploadStatus == UploadStatus.RESOLVE_FOLDER_ID ||
+          document.uploadStatus == UploadStatus.UPLOADING) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -413,6 +432,22 @@ class _ExpensesPageState extends State<ExpensesPage> {
                       padding: EdgeInsets.only(bottom: 16.0),
                       child: LinearProgressIndicator(),
                     ),
+                  if (_isUploadingCSVToCreateSheet)
+                    Text("Creating sheet by uploading CSV file..."),
+                  if (_isRunningAppsScriptAutomation)
+                    Text("Parsing data using EANW automation..."),
+                  ...documentsToUpload
+                      .where((doc) => doc.uploadStatus == UploadStatus.QUEUED)
+                      .map((doc) => Text("Queued ${doc.title}...")),
+                  ...documentsToUpload
+                      .where((doc) =>
+                          doc.uploadStatus == UploadStatus.RESOLVE_FOLDER_ID)
+                      .map((doc) =>
+                          Text("Resolving folder id for ${doc.title}...")),
+                  ...documentsToUpload
+                      .where(
+                          (doc) => doc.uploadStatus == UploadStatus.UPLOADING)
+                      .map((doc) => Text("Uploading ${doc.title}...")),
                   const SizedBox(height: 24),
                   Text(
                     'Upload Documents',
