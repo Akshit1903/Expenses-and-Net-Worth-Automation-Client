@@ -35,6 +35,9 @@ class Utils {
       "STATE_CONFIG_APPS_SCRIPT";
   static String STATE_CONFIG_APPS_SCRIPT_URI = "";
 
+  static final ValueNotifier<List<String>> snackbarHistory =
+      ValueNotifier<List<String>>([]);
+
   static late GoogleSignIn _googleSignIn;
   static late SharedPreferencesWithCache _prefs;
 
@@ -59,6 +62,10 @@ class Utils {
   }
 
   static snackbar(BuildContext context, String message) {
+    final history = List<String>.from(snackbarHistory.value);
+    history.add(message);
+    snackbarHistory.value = history;
+
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
     ));

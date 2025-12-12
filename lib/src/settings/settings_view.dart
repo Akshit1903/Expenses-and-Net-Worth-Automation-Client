@@ -1,3 +1,4 @@
+import 'package:expense_and_net_worth_automation/src/settings/snackbar_history.dart';
 import 'package:expense_and_net_worth_automation/src/settings/vars_config.dart';
 import 'package:flutter/material.dart';
 
@@ -50,6 +51,8 @@ class SettingsView extends StatelessWidget {
             ),
             SizedBox(height: 24),
             VarsConfig(),
+            SizedBox(height: 24),
+            SnackbarHistory(),
           ],
         ),
       ),
