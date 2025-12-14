@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomTextField extends StatefulWidget {
   final String hintText;
@@ -14,6 +15,13 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   final _focusNode = FocusNode();
+  Future<void> _pasteFromClipboard() async {
+    final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+    if (clipboardData != null) {
+      widget.controller.text = clipboardData.text ?? "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
@@ -29,10 +37,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
         contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
         suffixIcon: IconButton(
           onPressed: () => setState(() {
-            widget.controller.clear();
-            FocusScope.of(context).requestFocus(_focusNode);
+            _pasteFromClipboard();
+            // FocusScope.of(context).requestFocus(_focusNode);
           }),
-          icon: Icon(Icons.cancel),
+          icon: Icon(Icons.paste),
         ),
       ),
       controller: widget.controller,
