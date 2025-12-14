@@ -24,6 +24,7 @@ dependencies:
   receive_sharing_intent: ^1.8.1
   syncfusion_flutter_pdf: ^31.2.18
   path_provider: ^2.1.5
+  archive: ^4.0.7
 
 dev_dependencies:
   flutter_test:

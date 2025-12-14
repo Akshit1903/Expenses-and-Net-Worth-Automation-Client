@@ -165,11 +165,36 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
       for (final UploadDocument document in documentsToUpload) {
         if (document.path != null) {
-          // Check for password protected PDF
+          // Check for Zip file
           setState(() {
             document.uploadStatus = UploadStatus.DECRYPTING;
           });
-          if (document.path!.toLowerCase().endsWith('.pdf') &&
+          if (document.path!.toLowerCase().endsWith('.zip')) {
+            try {
+              // Try to extract without password first
+              final String extractedPdfPath =
+                  await Utils.extractPdfFromZip(document.path!);
+              document.path = extractedPdfPath;
+            } catch (e) {
+              // If failed, assume it needs password
+              try {
+                String? password =
+                    await _gcpClient.getDocumentPassword(document.id, context);
+                if (password == null || password.isEmpty) {
+                  throw 'Password not found for zip';
+                }
+                document.path = await Utils.extractPdfFromZip(document.path!,
+                    password: password);
+              } catch (e) {
+                Utils.snackbar(context,
+                    'Failed to extract PDF from Zip for ${document.title}: $e');
+                setState(() {
+                  document.uploadStatus = UploadStatus.FAILURE;
+                });
+                continue;
+              }
+            }
+          } else if (document.path!.toLowerCase().endsWith('.pdf') &&
               await Utils.isPdfEncrypted(document.path!)) {
             try {
               String? password =

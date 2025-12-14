@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:archive/archive_io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
@@ -166,5 +167,26 @@ class Utils {
     await tempFile.writeAsBytes(await document.save());
     document.dispose();
     return tempPath;
+  }
+
+  static Future<String> extractPdfFromZip(String filePath,
+      {String? password}) async {
+    final file = File(filePath);
+    final bytes = await file.readAsBytes();
+    final archive = ZipDecoder().decodeBytes(bytes, password: password);
+
+    for (final archiveFile in archive) {
+      if (archiveFile.isFile &&
+          archiveFile.name.toLowerCase().endsWith('.pdf')) {
+        final directory = await getTemporaryDirectory();
+        final tempPath =
+            '${directory.path}/${archiveFile.name.split('/').last}'; // handle potential path in zip
+        final tempFile = File(tempPath);
+        final data = archiveFile.content as List<int>;
+        await tempFile.writeAsBytes(data);
+        return tempPath;
+      }
+    }
+    throw Exception('No PDF file found in Zip archive');
   }
 }
