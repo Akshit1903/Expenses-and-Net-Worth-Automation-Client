@@ -1,6 +1,5 @@
 import 'package:expense_and_net_worth_automation/src/home/expenses/expenses_page.dart';
 import 'package:expense_and_net_worth_automation/src/home/investment_page.dart';
-import 'package:expense_and_net_worth_automation/src/home/net_worth_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';
@@ -20,12 +19,12 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   static const List<Widget> _widgetOptions = <Widget>[
     ExpensesPage(),
-    NetWorthPage(),
+    // NetWorthPage(),
     InvestmentPage(),
   ];
 
   void _onItemTapped(int index) {
-    if (index == 3) {
+    if (index == _widgetOptions.length) {
       Navigator.pushNamed(context, SettingsView.routeName);
       return;
     }
@@ -66,10 +65,10 @@ class _MainScaffoldState extends State<MainScaffold> {
             icon: Icon(Icons.attach_money),
             label: 'Expenses',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'Net Worth',
-          ),
+          // NavigationDestination(
+          //   icon: Icon(Icons.account_balance_wallet),
+          //   label: 'Net Worth',
+          // ),
           NavigationDestination(
             icon: Icon(Icons.show_chart),
             label: 'Investment',

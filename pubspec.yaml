@@ -35,11 +35,11 @@ dev_dependencies:
 
 package_rename_config:
   android:
-    app_name: "EANW Automation"
+    app_name: "Finance AL"
     package_name: "com.akshit.expense_and_net_worth_automation"
 
 launcher_name:
-  default: "EANW Automation"
+  default: "Finance AL"
 
 flutter_launcher_icons:
   android: "launcher_icon"
