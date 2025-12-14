@@ -162,9 +162,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
           });
         }
       }
-
+      List<Future<void>> documentUploadFutures = [];
       for (final UploadDocument document in documentsToUpload) {
-        if (document.path != null) {
+        Future<void> resolveDoumentUploadFuture() async {
           // Check for Zip file
           setState(() {
             document.uploadStatus = UploadStatus.DECRYPTING;
@@ -191,7 +191,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 setState(() {
                   document.uploadStatus = UploadStatus.FAILURE;
                 });
-                continue;
+                return;
               }
             }
           } else if (document.path!.toLowerCase().endsWith('.pdf') &&
@@ -210,7 +210,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
               setState(() {
                 document.uploadStatus = UploadStatus.FAILURE;
               });
-              continue;
+              return;
             }
           }
 
@@ -225,7 +225,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
             });
             Utils.snackbar(
                 context, 'Folder ID not found for ${document.title}');
-            continue;
+            return;
           }
           setState(() {
             document.uploadStatus = UploadStatus.UPLOADING;
@@ -249,7 +249,12 @@ class _ExpensesPageState extends State<ExpensesPage> {
             }
           });
         }
+
+        if (document.path != null) {
+          documentUploadFutures.add(resolveDoumentUploadFuture());
+        }
       }
+      await Future.wait(documentUploadFutures);
     } catch (e) {
       Utils.snackbar(context, 'Error: ${e.toString()}');
     }
@@ -492,6 +497,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   ...documentsToUpload
                       .where((doc) => doc.uploadStatus == UploadStatus.QUEUED)
                       .map((doc) => Text("Queued ${doc.title}...")),
+                  ...documentsToUpload
+                      .where(
+                          (doc) => doc.uploadStatus == UploadStatus.DECRYPTING)
+                      .map((doc) => Text(
+                          "Decrypting document to simple PDF: ${doc.title}...")),
                   ...documentsToUpload
                       .where((doc) =>
                           doc.uploadStatus == UploadStatus.RESOLVE_FOLDER_ID)
