@@ -322,6 +322,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
         case UploadStatus.SELECTED:
           setState(() {
             uploadDocument.path = null;
+            uploadDocument.uploadStatus = UploadStatus.NOT_INITIATED;
           });
           return;
         default:
