@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class Utils {
@@ -13,11 +11,7 @@ class Utils {
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
   static const EMAIL = "email";
-  static const _SCOPES = [
-    "https://www.googleapis.com/auth/script.projects",
-    "https://www.googleapis.com/auth/spreadsheets",
-    'https://www.googleapis.com/auth/drive.file',
-  ];
+
   static const MONTHS = [
     'January',
     'February',
@@ -33,48 +27,19 @@ class Utils {
     'December'
   ];
 
-  static const STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY =
-      "STATE_CONFIG_APPS_SCRIPT";
-  static String STATE_CONFIG_APPS_SCRIPT_URI = "";
-
-  static const EANW_AUTOMATION_APPS_SCRIPTS_URI_PREFS_KEY =
-      "EANW_AUTOMATION_APPS_SCRIPTS_URI";
-  static String EANW_AUTOMATION_APPS_SCRIPTS_URI = "";
-
   static final ValueNotifier<List<String>> snackbarHistory =
       ValueNotifier<List<String>>([]);
 
-  static late GoogleSignIn _googleSignIn;
-  static late SharedPreferencesWithCache _prefs;
-
-  static SharedPreferencesWithCache get prefs => _prefs;
-  static GoogleSignIn get googleSignIn => _googleSignIn;
-
-  static Future<void> init() async {
-    _prefs = await SharedPreferencesWithCache.create(
-      cacheOptions: const SharedPreferencesWithCacheOptions(
-        allowList: <String>{EMAIL, STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY},
-      ),
-    );
-    _googleSignIn = GoogleSignIn(scopes: _SCOPES);
-    if (Utils.prefs.containsKey(Utils.EMAIL)) {
-      await Utils.googleSignIn.signInSilently();
-    }
-    if (Utils.prefs.containsKey(STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY)) {
-      STATE_CONFIG_APPS_SCRIPT_URI =
-          await Utils.prefs.getString(STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY)!;
-    }
-    // EANW_AUTOMATION_APPS_SCRIPTS_URI =
-  }
-
-  static snackbar(BuildContext context, String message) {
+  static showSnackBar(String message, BuildContext? context) {
     final history = List<String>.from(snackbarHistory.value);
     history.add(message);
     snackbarHistory.value = history;
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-    ));
+    if (context != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+      ));
+    }
   }
 
   static String getPreviousMonthYear() {

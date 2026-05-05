@@ -1,6 +1,9 @@
+import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dart';
+import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/services/hosts_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
-import 'package:flutter/material.dart';
 import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:flutter/material.dart';
 
 class VarsConfig extends StatefulWidget {
   const VarsConfig({super.key});
@@ -10,27 +13,33 @@ class VarsConfig extends StatefulWidget {
 }
 
 class _VarsConfigState extends State<VarsConfig> {
-  final TextEditingController _googleAppsScriptUrlController =
-      TextEditingController(text: Utils.STATE_CONFIG_APPS_SCRIPT_URI);
+  final HostsService _hostsService = getIt<HostsService>();
+
+  final TextEditingController _stateConfigAppsScriptController =
+      TextEditingController();
+  final TextEditingController _eanwAutomationAppsScriptController =
+      TextEditingController();
 
   @override
   void initState() {
     super.initState();
-
-    _googleAppsScriptUrlController.addListener(() {
-      setState(() {});
+    _hostsService
+        .getAppsScriptHost(AppsScriptType.eanw)
+        .then((eanwAppsScriptURL) {
+      _eanwAutomationAppsScriptController.text = eanwAppsScriptURL;
+    });
+    _hostsService
+        .getAppsScriptHost(AppsScriptType.stateConfig)
+        .then((stateConfigAppsScriptURL) {
+      _stateConfigAppsScriptController.text = stateConfigAppsScriptURL;
     });
   }
 
   @override
   void dispose() {
-    _googleAppsScriptUrlController.dispose();
+    _stateConfigAppsScriptController.dispose();
+    _eanwAutomationAppsScriptController.dispose();
     super.dispose();
-  }
-
-  bool _isSaveButtonEnabled() {
-    return Utils.STATE_CONFIG_APPS_SCRIPT_URI !=
-        _googleAppsScriptUrlController.text;
   }
 
   @override
@@ -41,8 +50,7 @@ class _VarsConfigState extends State<VarsConfig> {
         if (didPop) {
           return;
         }
-        final bool shouldPop = (!_isSaveButtonEnabled()) ||
-            (await Utils.showBackDialog(context) ?? false);
+        final bool shouldPop = await Utils.showBackDialog(context) ?? false;
         if (context.mounted && shouldPop) {
           Navigator.pop(context);
         }
@@ -50,35 +58,57 @@ class _VarsConfigState extends State<VarsConfig> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "State Config Script URL",
-            style: TextStyle(fontSize: 18),
-          ),
-          const SizedBox(height: 16),
-          CustomTextField(
-            hintText: 'Enter State Config Script URL',
-            controller: _googleAppsScriptUrlController,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _isSaveButtonEnabled()
-                ? () async {
-                    await Utils.prefs.setString(
-                        Utils.STATE_CONFIG_APPS_SCRIPT_URI_PREFS_KEY,
-                        _googleAppsScriptUrlController.text);
-                    setState(() {
-                      Utils.STATE_CONFIG_APPS_SCRIPT_URI =
-                          _googleAppsScriptUrlController.text;
-                      Utils.snackbar(
-                          context, "State Config Script URL Updated");
-                    });
-                    Navigator.pop(context);
-                  }
-                : null,
-            child: const Text('Save'),
+          ..._buildURLFields(
+              "State Config Script URL", _stateConfigAppsScriptController),
+          ..._buildURLFields(
+              "EANW Script URL", _eanwAutomationAppsScriptController),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  await _saveURLs();
+                  Navigator.pop(context);
+                },
+                child: const Text('Save'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await _hostsService.refreshHosts();
+                },
+                child: const Text('Refresh'),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildURLFields(String title, TextEditingController controller) {
+    return [
+      Text(
+        title,
+        style: TextStyle(fontSize: 18),
+      ),
+      const SizedBox(height: 16),
+      CustomTextField(
+        hintText: 'Enter $title',
+        controller: controller,
+      ),
+      const SizedBox(height: 16),
+    ];
+  }
+
+  Future<void> _saveURLs() async {
+    await _hostsService.setAppsScriptHost(
+      AppsScriptType.stateConfig,
+      _stateConfigAppsScriptController.text,
+    );
+    await _hostsService.setAppsScriptHost(
+      AppsScriptType.eanw,
+      _eanwAutomationAppsScriptController.text,
+    );
+    Utils.showSnackBar("URLs Updated", context);
   }
 }

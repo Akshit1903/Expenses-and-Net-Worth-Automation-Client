@@ -25,6 +25,8 @@ dependencies:
   syncfusion_flutter_pdf: ^31.2.18
   path_provider: ^2.1.5
   archive: ^4.0.7
+  get_it: ^8.0.2
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -50,10 +52,7 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-
-  # Enable generation of localized Strings from arb files.
   generate: true
-
   assets:
-    # Add assets from the images directory to the application.
     - assets/images/
+    - .env

@@ -1,3 +1,22 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "git.ignoreLimitWarning": true,
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "cmake.sourceDirectory": "C:/Users/akshi/Desktop/Development/Flutter/Projects/gym_stats_entry/gym_stats_entry_client/linux",
+
+  // --- Flutter & Dart Efficiency Settings ---
+
+  // Automatically formats the code according to Dart standards on save
+  "editor.formatOnSave": true,
+
+  // Fixes "Fixable" lint errors (like adding 'const') automatically
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // Ensures the preview of UI code (Closing Labels) is visible
+  "dart.closingLabels": true,
+
+  // Helps with performance in large projects
+  "dart.analysisExcludedFolders": [".dart_tool", "build"]
 }

@@ -1,40 +1,52 @@
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class AuthProvider with ChangeNotifier {
-  GoogleSignIn _googleSignIn = Utils.googleSignIn;
-  final SharedPreferencesWithCache _prefs = Utils.prefs;
+class AuthProvider extends ChangeNotifier {
+  final AuthService _authService;
 
-  Future<bool> isAuthenticated() {
-    return _googleSignIn.isSignedIn();
+  bool _isSigningIn = false;
+  bool _isAuthenticated = false;
+
+  AuthProvider() : _authService = getIt<AuthService>() {
+    _authService.onUserChanged.listen((account) {
+      _isAuthenticated = account != null;
+      notifyListeners();
+    });
+  }
+
+  bool get isAuthenticated => _isAuthenticated;
+  bool get isSigningIn => _isSigningIn;
+
+  Future<void> signIn() async {
+    _setIsSigningIn(true);
+    try {
+      await _authService.signIn();
+    } finally {
+      _setIsSigningIn(false);
+    }
   }
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    await _prefs.remove(Utils.EMAIL);
-    notifyListeners();
+    _setIsSigningIn(true);
+    try {
+      await _authService.signOut();
+    } finally {
+      _setIsSigningIn(false);
+    }
   }
 
-  Future<void> signIn() async {
-    if (_prefs.containsKey(Utils.EMAIL)) {
-      await _googleSignIn.signInSilently();
-    } else {
-      await _googleSignIn.signIn();
-      await _prefs.setString(Utils.EMAIL, _googleSignIn.currentUser!.email);
+  Future<void> silentSignIn() async {
+    _setIsSigningIn(true);
+    try {
+      await _authService.silentSignIn();
+    } finally {
+      _setIsSigningIn(false);
     }
-    notifyListeners();
   }
 
-  Future<String?> get getAccessToken async {
-    GoogleSignInAccount? googleSignInAccount = await _googleSignIn.currentUser;
-    if (googleSignInAccount == null) {
-      await signIn();
-      googleSignInAccount = await _googleSignIn.currentUser;
-    }
-    final googleSignInAuthentication =
-        await googleSignInAccount!.authentication;
-    return googleSignInAuthentication.accessToken;
+  void _setIsSigningIn(bool value) {
+    _isSigningIn = value;
+    notifyListeners();
   }
 }

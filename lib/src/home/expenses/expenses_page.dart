@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:expense_and_net_worth_automation/src/clients/gcp_client.dart';
-import 'package:expense_and_net_worth_automation/src/home/expenses/document_upload.dart';
+import 'package:expense_and_net_worth_automation/src/clients/config_state_apps_scripts_client.dart';
+import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
+import 'package:expense_and_net_worth_automation/src/clients/google_workspace_client.dart';
+import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
-import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
+import 'package:expense_and_net_worth_automation/src/models/document_upload.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
 import 'package:expense_and_net_worth_automation/src/utils/upload_status.dart';
 import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
@@ -13,7 +15,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:json_view/json_view.dart';
-import 'package:provider/provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,7 +32,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
   String _csvFilePath = '';
   String _createSpreadSheetByUploadingCSVFileResponse = '{}';
-  String _appsScriptResponse = '{}';
+  String? _appsScriptResponse = '{}';
   List<List<String>> _unprocessedTransactions = [];
 
   List<UploadDocument> documentsToUpload = [
@@ -47,7 +48,12 @@ class _ExpensesPageState extends State<ExpensesPage> {
   ];
 
   TextEditingController _spreadSheetUrlController = TextEditingController();
-  late GcpClient _gcpClient;
+  final GoogleWorkspaceClient _googleWorkspaceClient =
+      getIt<GoogleWorkspaceClient>();
+  final EanwAppsScriptsClient _eanwAppsScriptsClient =
+      getIt<EanwAppsScriptsClient>();
+  final ConfigStateAppsScriptsClient _configStateAppsScriptsClient =
+      getIt<ConfigStateAppsScriptsClient>();
   late StreamSubscription _intentSub;
 
   @override
@@ -75,7 +81,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
         // leaving as is for now but might need adjustment if this was intended to close a dialog.
       });
     }, onError: (err) {
-      Utils.snackbar(context, "getIntentDataStream error: $err");
+      Utils.showSnackBar("getIntentDataStream error: $err", context);
     });
 
     ReceiveSharingIntent.instance.getInitialMedia().then((value) {
@@ -85,33 +91,17 @@ class _ExpensesPageState extends State<ExpensesPage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _getGcpClientAndSetAppsScriptUrl();
-  }
-
-  @override
   void dispose() {
     _intentSub.cancel();
     _spreadSheetUrlController.dispose();
     super.dispose();
   }
 
-  Future<void> _getGcpClientAndSetAppsScriptUrl() async {
-    _gcpClient = GcpClient(context.read<AuthProvider>());
-    String? appsScriptUrl = await _gcpClient.getAppsScriptClientUrl(context);
-    if (appsScriptUrl != null &&
-        Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty) {
-      if (mounted) {
-        setState(() {
-          Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI = appsScriptUrl;
-        });
-      }
-    }
-  }
-
   List<List<String>> _getUnprocessedTransactions(
-      String unprocessedTransactionsResponse) {
+      String? unprocessedTransactionsResponse) {
+    if (unprocessedTransactionsResponse == null) {
+      return [];
+    }
     final jsonResponse = jsonDecode(unprocessedTransactionsResponse);
     return (jsonResponse['unprocessedTransactions'] as List)
         .map<List<String>>((row) =>
@@ -125,8 +115,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
         setState(() {
           _isUploadingCSVToCreateSheet = true;
         });
-        String response =
-            await _gcpClient.createSpreadSheetByUploadingCSVFile(_csvFilePath);
+        String response = await _googleWorkspaceClient
+            .createSpreadSheetByUploadingCSVFile(_csvFilePath);
         setState(() {
           _createSpreadSheetByUploadingCSVFileResponse = response;
           String spreadSheetId =
@@ -145,12 +135,13 @@ class _ExpensesPageState extends State<ExpensesPage> {
         setState(() {
           _isRunningAppsScriptAutomation = true;
         });
-        String response = await _gcpClient
-            .triggerExpenseAndNetWorthAutomationAppsScript(spreadSheetId);
+        String? response = await _eanwAppsScriptsClient
+            .triggerExpenseAndNetWorthAutomationAppsScript(
+                spreadSheetId, context);
         setState(() {
           _appsScriptResponse = response;
-          _unprocessedTransactions = _getUnprocessedTransactions(
-              jsonDecode(_appsScriptResponse)['response']['result']);
+          _unprocessedTransactions =
+              _getUnprocessedTransactions(_appsScriptResponse);
           _isRunningAppsScriptAutomation = false;
         });
       }
@@ -178,16 +169,17 @@ class _ExpensesPageState extends State<ExpensesPage> {
             } catch (e) {
               // If failed, assume it needs password
               try {
-                String? password =
-                    await _gcpClient.getDocumentPassword(document.id, context);
+                String? password = await _configStateAppsScriptsClient
+                    .getDocumentPassword(document.id, context);
                 if (password == null || password.isEmpty) {
                   throw 'Password not found for zip';
                 }
                 document.path = await Utils.extractPdfFromZip(document.path!,
                     password: password);
               } catch (e) {
-                Utils.snackbar(context,
-                    'Failed to extract PDF from Zip for ${document.title}: $e');
+                Utils.showSnackBar(
+                    'Failed to extract PDF from Zip for ${document.title}: $e',
+                    context);
                 setState(() {
                   document.uploadStatus = UploadStatus.FAILURE;
                 });
@@ -197,16 +189,16 @@ class _ExpensesPageState extends State<ExpensesPage> {
           } else if (document.path!.toLowerCase().endsWith('.pdf') &&
               await Utils.isPdfEncrypted(document.path!)) {
             try {
-              String? password =
-                  await _gcpClient.getDocumentPassword(document.id, context);
+              String? password = await _configStateAppsScriptsClient
+                  .getDocumentPassword(document.id, context);
               if (password == null || password.isEmpty) {
                 throw 'Password not found';
               }
               document.path =
                   await Utils.getDecryptedPdf(document.path!, password);
             } catch (e) {
-              Utils.snackbar(
-                  context, 'Failed to decrypt PDF for ${document.title}: $e');
+              Utils.showSnackBar(
+                  'Failed to decrypt PDF for ${document.title}: $e', context);
               setState(() {
                 document.uploadStatus = UploadStatus.FAILURE;
               });
@@ -217,14 +209,14 @@ class _ExpensesPageState extends State<ExpensesPage> {
           setState(() {
             document.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
           });
-          String? folderId =
-              await _gcpClient.getDocumentFolderId(document.id, context);
+          String? folderId = await _configStateAppsScriptsClient
+              .getDocumentFolderId(document.id, context);
           if (folderId == null) {
             setState(() {
               document.uploadStatus = UploadStatus.FAILURE;
             });
-            Utils.snackbar(
-                context, 'Folder ID not found for ${document.title}');
+            Utils.showSnackBar(
+                'Folder ID not found for ${document.title}', context);
             return;
           }
           setState(() {
@@ -236,11 +228,12 @@ class _ExpensesPageState extends State<ExpensesPage> {
             now.month - 1,
             now.day,
           );
-          document.uploadedFileId = await _gcpClient.uploadDocument(
-              path: document.path.toString(),
-              fileName: "${oneMonthAgo.year}-${oneMonthAgo.month}.pdf",
-              folderId: folderId,
-              context: context);
+          document.uploadedFileId =
+              await _googleWorkspaceClient.uploadDocumentToDrive(
+                  path: document.path.toString(),
+                  fileName: "${oneMonthAgo.year}-${oneMonthAgo.month}.pdf",
+                  folderId: folderId,
+                  context: context);
           setState(() {
             if (document.uploadedFileId == null) {
               document.uploadStatus = UploadStatus.FAILURE;
@@ -256,7 +249,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
       }
       await Future.wait(documentUploadFutures);
     } catch (e) {
-      Utils.snackbar(context, 'Error: ${e.toString()}');
+      Utils.showSnackBar('Error: ${e.toString()}', context);
     }
   }
 
@@ -269,14 +262,14 @@ class _ExpensesPageState extends State<ExpensesPage> {
       File file = File(result.files.single.path!);
       String filePath = file.path;
       if (filePath.split('.').last != 'csv') {
-        Utils.snackbar(context, 'Invalid file type');
+        Utils.showSnackBar('Invalid file type', context);
         return;
       }
       setState(() {
         _csvFilePath = filePath;
       });
     } else {
-      Utils.snackbar(context, 'No file selected');
+      Utils.showSnackBar('No file selected', context);
     }
   }
 
@@ -287,7 +280,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
     if (result == null) {
       if (mounted) {
-        Utils.snackbar(context, 'No file selected for ${document.title}');
+        Utils.showSnackBar('No file selected for ${document.title}', context);
       }
       return;
     }
@@ -300,7 +293,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
   Future<void> _launchSheet() async {
     Uri url = Uri.parse(_spreadSheetUrlController.text);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      Utils.snackbar(context, 'Could not open the sheet');
+      Utils.showSnackBar('Could not open the sheet', context);
     }
   }
 
@@ -315,7 +308,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
           String fileIdUrl =
               Utils.resolveDriveFileUrl(uploadDocument.uploadedFileId);
           await Clipboard.setData(ClipboardData(text: fileIdUrl));
-          Utils.snackbar(context, 'Drive file URL copied: $fileIdUrl');
+          Utils.showSnackBar('Drive file URL copied: $fileIdUrl', context);
         case UploadStatus.NOT_INITIATED || UploadStatus.FAILURE:
           _pickDocument(uploadDocument);
           return;
@@ -408,8 +401,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
       );
 
   bool _isTriggerAutomationButtonDisabled() {
-    return (Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty ||
-            _isLoading ||
+    return (_isLoading ||
             (_csvFilePath == '' && _spreadSheetUrlController.text.isEmpty)) &&
         !_isDocumentUploadPending();
   }
@@ -458,9 +450,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: Utils.EANW_AUTOMATION_APPS_SCRIPTS_URI.isEmpty
-                        ? null
-                        : _pickCSVFile,
+                    onPressed: _pickCSVFile,
                     icon: const Icon(Icons.table_view),
                     label: const Text('Select CSV File'),
                     style: ElevatedButton.styleFrom(
@@ -573,7 +563,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   Text("Apps Script Response:",
                       style: Theme.of(context).textTheme.labelLarge),
                   Container(
-                      height: 200, child: _getJsonWidget(_appsScriptResponse)),
+                      height: 200,
+                      child: _getJsonWidget(_appsScriptResponse ?? "{}")),
                 ],
                 if (_unprocessedTransactions.isNotEmpty)
                   Padding(
