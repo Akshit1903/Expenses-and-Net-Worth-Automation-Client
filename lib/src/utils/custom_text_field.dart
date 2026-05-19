@@ -25,7 +25,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
     }
   }
 
-  /// ARCH-8 FIX: Dispose FocusNode to prevent resource leaks.
   @override
   void dispose() {
     _focusNode.dispose();

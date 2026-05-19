@@ -7,15 +7,12 @@ import 'package:flutter/material.dart';
 /// History is capped at [AppConstants.maxSnackbarHistorySize] entries
 /// to prevent unbounded memory growth (SEC-7).
 class SnackbarService {
-  SnackbarService._(); // Prevent instantiation
+  SnackbarService._(); 
 
   static final ValueNotifier<List<String>> snackbarHistory =
       ValueNotifier<List<String>>([]);
 
   /// Shows a snackbar message and records it in history.
-  ///
-  /// If [context] is null or not mounted, the message is still
-  /// recorded in history for later viewing in Settings.
   static void showSnackBar(String message, BuildContext? context) {
     _addToHistory(message);
 
@@ -30,7 +27,6 @@ class SnackbarService {
     final history = List<String>.from(snackbarHistory.value);
     history.add(message);
 
-    // Cap history size to prevent unbounded memory growth
     if (history.length > AppConstants.maxSnackbarHistorySize) {
       history.removeRange(
           0, history.length - AppConstants.maxSnackbarHistorySize);

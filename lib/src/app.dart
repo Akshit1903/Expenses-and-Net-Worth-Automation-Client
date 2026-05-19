@@ -8,13 +8,6 @@ import 'package:provider/provider.dart';
 import 'home/main_scaffold.dart';
 import 'settings/settings_controller.dart';
 
-/// The Widget that configures your application.
-///
-/// BUG-1 FIX: Removed FutureBuilder around silentSignIn() which caused
-/// infinite rebuilds on every navigation. Silent sign-in is now performed
-/// once in main().
-///
-/// ARCH-11 FIX: No longer holds a service reference in a StatelessWidget.
 class MyApp extends StatelessWidget {
   const MyApp({
     super.key,

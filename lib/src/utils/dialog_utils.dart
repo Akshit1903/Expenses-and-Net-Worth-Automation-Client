@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Reusable dialog utilities.
-///
-/// Extracted from Utils to follow Single Responsibility Principle.
 class DialogUtils {
-  DialogUtils._(); // Prevent instantiation
-
-  /// Shows a confirmation dialog when the user attempts to navigate back.
-  ///
-  /// Returns `true` if the user confirms they want to leave.
+  DialogUtils._();
   static Future<bool?> showBackDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,

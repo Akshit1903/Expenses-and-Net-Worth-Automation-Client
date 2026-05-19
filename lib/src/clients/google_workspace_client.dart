@@ -19,9 +19,6 @@ class WorkspaceResult {
 }
 
 /// Client for Google Workspace APIs (Drive, Sheets).
-///
-/// ARCH-2 FIX: No longer accepts BuildContext. Returns [WorkspaceResult]
-/// so the calling UI layer handles success/error display.
 class GoogleWorkspaceClient {
   final AuthService _authService;
   GoogleWorkspaceClient() : _authService = getIt<AuthService>();
@@ -59,8 +56,6 @@ $fileContents
   }
 
   /// Uploads a document to Google Drive.
-  ///
-  /// ARCH-2 FIX: Returns [WorkspaceResult] instead of accepting BuildContext.
   Future<WorkspaceResult> uploadDocumentToDrive({
     required String path,
     required String fileName,

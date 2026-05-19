@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A service that stores and retrieves user settings.
-///
-/// ARCH-7 FIX: Now persists theme preference using SharedPreferences
-/// instead of being a no-op stub. Users retain their theme choice
-/// across app restarts.
 class SettingsService {
   static const String _themeModeKey = 'theme_mode';
 

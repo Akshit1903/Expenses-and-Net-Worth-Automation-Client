@@ -7,11 +7,9 @@ class UnprocessedTransactionsPage extends StatelessWidget {
 
   static const String routeName = "/unprocessed-transactions";
 
-  /// BUG-4 FIX: Use tryParse to handle non-numeric amount strings
-  /// gracefully instead of crashing with FormatException.
   String _formatIndianCurrency(String amount) {
     final parsed = double.tryParse(amount);
-    if (parsed == null) return amount; // Return raw string as fallback
+    if (parsed == null) return amount;
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',
@@ -21,8 +19,6 @@ class UnprocessedTransactionsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // BUG-5 FIX: Safe argument casting with null/type check.
-    // Previously, a hard cast would crash if navigated to via deep link.
     final args = ModalRoute.of(context)?.settings.arguments;
     final List<List<String>> unprocessedTransactions =
         (args is List<List<String>>) ? args : [];

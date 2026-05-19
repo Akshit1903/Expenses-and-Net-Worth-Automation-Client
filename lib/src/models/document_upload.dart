@@ -2,11 +2,6 @@ import 'package:expense_and_net_worth_automation/src/utils/upload_status.dart';
 import 'package:flutter/material.dart';
 
 /// Model representing a document to be uploaded.
-///
-/// ARCH-4 FIX: Added encapsulation with private fields and getters.
-/// The [id] and [title] are immutable (set once at construction).
-/// Mutable fields [path], [uploadedFileId], and [uploadStatus] use
-/// controlled setters where appropriate.
 class UploadDocument {
   final String id;
   final String title;

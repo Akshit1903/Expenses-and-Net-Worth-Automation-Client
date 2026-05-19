@@ -12,13 +12,10 @@ import 'src/settings/settings_controller.dart';
 import 'src/settings/settings_service.dart';
 
 Future<void> main() async {
-  // ARCH-10: Global error handling — catches uncaught Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
   };
-
-  // ARCH-10: Global error handling — catches uncaught async errors
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load(fileName: ".env");
@@ -27,10 +24,7 @@ Future<void> main() async {
     final settingsController = SettingsController(SettingsService());
     await settingsController.loadSettings();
 
-    // BUG-1 FIX: Perform silent sign-in once at startup,
-    // not inside a FutureBuilder that re-runs on every rebuild.
-    final authService = getIt<AuthService>();
-    await authService.silentSignIn();
+    await getIt<AuthService>().silentSignIn();
 
     runApp(ChangeNotifierProvider(
         create: (context) => AuthProvider(),

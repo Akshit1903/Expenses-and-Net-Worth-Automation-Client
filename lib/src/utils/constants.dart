@@ -1,9 +1,7 @@
 /// Application-wide constants.
-///
-/// Centralizes magic strings and configuration values
-/// to avoid scattering them across the codebase.
+
 class AppConstants {
-  AppConstants._(); // Prevent instantiation
+  AppConstants._();
 
   static const String eanwAutomation = 'EANW_AUTOMATION';
 
@@ -27,14 +25,11 @@ class AppConstants {
     'December',
   ];
 
-  /// Maximum number of snackbar history entries to retain.
   static const int maxSnackbarHistorySize = 100;
 
-  /// Google Sheets base URL pattern.
   static const String googleSheetsBaseUrl =
       'https://docs.google.com/spreadsheets/d/';
 
-  /// Google Drive file view base URL.
   static const String googleDriveFileBaseUrl =
       'https://drive.google.com/file/d/';
 }

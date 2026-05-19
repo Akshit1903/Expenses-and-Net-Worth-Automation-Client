@@ -99,7 +99,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
   void dispose() {
     _intentSub.cancel();
     _spreadSheetUrlController.dispose();
-    // SEC-4 FIX: Clean up temp files created during document processing
     PdfService.cleanupTempFiles();
     super.dispose();
   }
@@ -243,7 +242,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
             document.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
           });
 
-          // ARCH-2 FIX: Handle AppsScriptResult
           final folderResult = await _configStateAppsScriptsClient
               .getDocumentFolderId(document.id);
           if (!folderResult.isSuccess ||
@@ -266,10 +264,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
           final oneMonthAgo = DateTime(
             now.year,
             now.month - 1,
-            1, // BUG-3 analogy: use day=1 to avoid overflow
+            1,
           );
 
-          // ARCH-2 FIX: Handle WorkspaceResult
           final uploadResult =
               await _googleWorkspaceClient.uploadDocumentToDrive(
                   path: document.path.toString(),
@@ -344,8 +341,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
     });
   }
 
-  /// SEC-5 FIX: Validate URL before launching to prevent
-  /// opening malicious or non-HTTPS URLs.
   Future<void> _launchSheet() async {
     final urlText = _spreadSheetUrlController.text;
     if (!UrlUtils.isValidGoogleSheetsUrl(urlText)) {

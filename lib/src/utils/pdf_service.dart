@@ -6,17 +6,10 @@ import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 /// Service for PDF manipulation: encryption detection, decryption,
 /// and ZIP extraction.
-///
-/// Extracted from Utils to follow Single Responsibility Principle.
-/// Tracks created temp files for cleanup (SEC-4).
 class PdfService {
-  PdfService._(); // Prevent instantiation
-
-  /// Tracks temporary file paths created during processing
-  /// so they can be cleaned up after upload (SEC-4).
+  PdfService._(); 
   static final List<String> _tempFiles = [];
 
-  /// Returns the list of temp file paths created by this service.
   static List<String> get tempFiles => List.unmodifiable(_tempFiles);
 
   /// Checks if a PDF file at [filePath] is password-protected.

@@ -10,8 +10,6 @@ class AuthProvider extends ChangeNotifier {
   bool _isSigningIn = false;
   bool _isAuthenticated = false;
 
-  /// ARCH-6 FIX: Store the stream subscription so it can be cancelled
-  /// in [dispose] to prevent memory leaks if the provider is ever recreated.
   late final StreamSubscription _userChangedSubscription;
 
   AuthProvider() : _authService = getIt<AuthService>() {
@@ -56,7 +54,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// ARCH-6 FIX: Cancel the stream subscription to prevent leaks.
   @override
   void dispose() {
     _userChangedSubscription.cancel();
