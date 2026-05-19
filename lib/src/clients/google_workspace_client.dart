@@ -3,10 +3,25 @@ import 'dart:io';
 
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
-import 'package:flutter/material.dart';
+import 'package:expense_and_net_worth_automation/src/utils/app_date_utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/constants.dart';
 import 'package:http/http.dart' as http;
 
+/// Result type for Google Workspace API calls.
+class WorkspaceResult {
+  final String? data;
+  final String? errorMessage;
+
+  const WorkspaceResult.success(this.data) : errorMessage = null;
+  const WorkspaceResult.failure(this.errorMessage) : data = null;
+
+  bool get isSuccess => errorMessage == null;
+}
+
+/// Client for Google Workspace APIs (Drive, Sheets).
+///
+/// ARCH-2 FIX: No longer accepts BuildContext. Returns [WorkspaceResult]
+/// so the calling UI layer handles success/error display.
 class GoogleWorkspaceClient {
   final AuthService _authService;
   GoogleWorkspaceClient() : _authService = getIt<AuthService>();
@@ -19,7 +34,7 @@ class GoogleWorkspaceClient {
     File file = File(filePath);
     String fileContents = await file.readAsString();
     var metadata = '''{
-    "name": "${Utils.getPreviousMonthYear()}",
+    "name": "${AppDateUtils.getPreviousMonthYear()}",
     "mimeType": "application/vnd.google-apps.spreadsheet",
     "parents": ["1MIXsdv1PjLztvCGfRFitk6UqykCNbw-Y"]
   }''';
@@ -36,21 +51,23 @@ $fileContents
 --boundary_string--''';
 
     final response = await http.post(
-      Uri.parse(Utils.UPLOAD_DOCUMENT_TO_DRIVE_URI),
+      Uri.parse(AppConstants.uploadDocumentToDriveUri),
       headers: headers,
       body: body,
     );
     return response.body;
   }
 
-  Future<String?> uploadDocumentToDrive({
+  /// Uploads a document to Google Drive.
+  ///
+  /// ARCH-2 FIX: Returns [WorkspaceResult] instead of accepting BuildContext.
+  Future<WorkspaceResult> uploadDocumentToDrive({
     required String path,
     required String fileName,
     required String folderId,
-    required BuildContext context,
   }) async {
     final uri = Uri.parse(
-      Utils.UPLOAD_DOCUMENT_TO_DRIVE_URI,
+      AppConstants.uploadDocumentToDriveUri,
     );
 
     final request = http.MultipartRequest("POST", uri);
@@ -88,12 +105,11 @@ $fileContents
     if (response.statusCode == 200) {
       final body = await response.stream.bytesToString();
       final jsonResponse = jsonDecode(body);
-      return jsonResponse["id"];
+      return WorkspaceResult.success(jsonResponse["id"]);
     } else {
       final body = await response.stream.bytesToString();
-      Utils.showSnackBar(
-          "Failed to upload document: ${response.statusCode}: $body", context);
-      return null;
+      return WorkspaceResult.failure(
+          "Failed to upload document: ${response.statusCode}: $body");
     }
   }
 }

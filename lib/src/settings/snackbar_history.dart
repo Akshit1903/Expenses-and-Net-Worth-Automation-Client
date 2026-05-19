@@ -1,4 +1,4 @@
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
 import 'package:flutter/material.dart';
 
 class SnackbarHistory extends StatelessWidget {
@@ -12,7 +12,7 @@ class SnackbarHistory extends StatelessWidget {
         children: [
           Text("Snackbar History",
               style: Theme.of(context).textTheme.titleLarge),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -20,10 +20,11 @@ class SnackbarHistory extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ValueListenableBuilder<List<String>>(
-                valueListenable: Utils.snackbarHistory,
+                valueListenable: SnackbarService.snackbarHistory,
                 builder: (context, history, child) {
                   if (history.isEmpty) {
-                    return Center(child: Text("No snackbars shown yet."));
+                    return const Center(
+                        child: Text("No snackbars shown yet."));
                   }
                   return ListView.builder(
                     itemCount: history.length,
@@ -31,7 +32,7 @@ class SnackbarHistory extends StatelessWidget {
                       final message = history[history.length - 1 - index];
                       return ListTile(
                         title: Text(message),
-                        leading: Icon(Icons.info_outline),
+                        leading: const Icon(Icons.info_outline),
                         dense: true,
                       );
                     },

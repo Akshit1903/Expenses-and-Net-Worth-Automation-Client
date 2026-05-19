@@ -1,17 +1,16 @@
 import 'package:expense_and_net_worth_automation/src/clients/base/apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dart';
-import 'package:flutter/material.dart';
 
+/// Client for the EANW (Expenses & Net Worth) Apps Script backend.
+///
+/// ARCH-2 FIX: No longer accepts BuildContext. Returns [AppsScriptResult]
+/// for the UI layer to handle.
 class EanwAppsScriptsClient extends AppsScriptsClient {
   EanwAppsScriptsClient() : super(AppsScriptType.eanw);
 
-  Future<String?> triggerExpenseAndNetWorthAutomationAppsScript(
-      String spreadSheetId, BuildContext? context) async {
+  Future<AppsScriptResult> triggerExpenseAndNetWorthAutomationAppsScript(
+      String spreadSheetId) async {
     return await callAppsScripts(
-        "createRecurringExpensesSheet",
-        [spreadSheetId],
-        context,
-        "Expense and Net Worth Automation script triggered successfully!",
-        "Failed to trigger Expense and Net Worth Automation script");
+        "createRecurringExpensesSheet", [spreadSheetId]);
   }
 }

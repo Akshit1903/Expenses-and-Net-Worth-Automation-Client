@@ -7,81 +7,106 @@ class UnprocessedTransactionsPage extends StatelessWidget {
 
   static const String routeName = "/unprocessed-transactions";
 
+  /// BUG-4 FIX: Use tryParse to handle non-numeric amount strings
+  /// gracefully instead of crashing with FormatException.
   String _formatIndianCurrency(String amount) {
+    final parsed = double.tryParse(amount);
+    if (parsed == null) return amount; // Return raw string as fallback
     final formatter = NumberFormat.currency(
       locale: 'en_IN',
       symbol: '₹',
     );
-    return formatter.format(double.parse(amount));
+    return formatter.format(parsed);
   }
 
   @override
   Widget build(BuildContext context) {
-    final _unprocessedTransactions =
-        ModalRoute.of(context)?.settings.arguments as List<List<String>>;
+    // BUG-5 FIX: Safe argument casting with null/type check.
+    // Previously, a hard cast would crash if navigated to via deep link.
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final List<List<String>> unprocessedTransactions =
+        (args is List<List<String>>) ? args : [];
+
+    if (unprocessedTransactions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Unprocessed Transactions'),
+        ),
+        body: const Center(
+          child: Text('No unprocessed transactions found.'),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Unprocessed Transactions'),
       ),
       body: ListView.builder(
-        itemCount: _unprocessedTransactions.length,
+        itemCount: unprocessedTransactions.length,
         itemBuilder: (context, index) {
-          List<String> _unprocessedTransaction =
-              _unprocessedTransactions[index];
+          final unprocessedTransaction = unprocessedTransactions[index];
+
+          // Guard against malformed data with fewer than expected fields
+          if (unprocessedTransaction.length < 11) {
+            return ListTile(
+              title: Text('Malformed transaction at index $index'),
+              subtitle: Text(unprocessedTransaction.join(', ')),
+            );
+          }
 
           final [
-            ISSUE,
-            TIME,
-            PLACE,
-            AMOUNT,
-            DRCR,
-            ACCOUNT,
-            EXPENSE,
-            INCOME,
-            CATEGORY,
-            TAGS,
-            NOTE
-          ] = _unprocessedTransaction;
+            issue,
+            time,
+            place,
+            amount,
+            drCr,
+            account,
+            expense,
+            income,
+            category,
+            tags,
+            note,
+          ] = unprocessedTransaction;
           return ListTile(
               leading: CircleAvatar(
-                backgroundColor: (EXPENSE == "Yes" || INCOME == "Yes")
-                    ? (DRCR == "DR"
+                backgroundColor: (expense == "Yes" || income == "Yes")
+                    ? (drCr == "DR"
                         ? Colors.red.shade100
                         : Colors.green.shade100)
                     : Colors.transparent,
-                child: Text(DRCR,
+                child: Text(drCr,
                     style: TextStyle(
-                      color: DRCR == "DR" ? Colors.red : Colors.green,
+                      color: drCr == "DR" ? Colors.red : Colors.green,
                     )),
               ),
-              title: Text("$CATEGORY : $ACCOUNT"),
-              subtitle: Text(ISSUE),
+              title: Text("$category : $account"),
+              subtitle: Text(issue),
               trailing: Text(
-                _formatIndianCurrency(AMOUNT),
-                style: TextStyle(fontSize: 16),
+                _formatIndianCurrency(amount),
+                style: const TextStyle(fontSize: 16),
               ),
               onTap: () => {
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled:
                           true, // Allows full-screen height if needed
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.vertical(top: Radius.circular(16)),
                       ),
                       builder: (context) {
                         return Padding(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             mainAxisSize: MainAxisSize
                                 .min, // Ensures it doesn't take full screen
                             children: [
-                              Text(_unprocessedTransaction.join("\n")),
-                              SizedBox(height: 10),
+                              Text(unprocessedTransaction.join("\n")),
+                              const SizedBox(height: 10),
                               ElevatedButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text("Done"),
+                                child: const Text("Done"),
                               ),
                             ],
                           ),

@@ -2,7 +2,8 @@ import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dar
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/services/hosts_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/dialog_utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
 import 'package:flutter/material.dart';
 
 class VarsConfig extends StatefulWidget {
@@ -50,7 +51,8 @@ class _VarsConfigState extends State<VarsConfig> {
         if (didPop) {
           return;
         }
-        final bool shouldPop = await Utils.showBackDialog(context) ?? false;
+        final bool shouldPop =
+            await DialogUtils.showBackDialog(context) ?? false;
         if (context.mounted && shouldPop) {
           Navigator.pop(context);
         }
@@ -68,7 +70,9 @@ class _VarsConfigState extends State<VarsConfig> {
               ElevatedButton(
                 onPressed: () async {
                   await _saveURLs();
-                  Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
                 },
                 child: const Text('Save'),
               ),
@@ -89,7 +93,7 @@ class _VarsConfigState extends State<VarsConfig> {
     return [
       Text(
         title,
-        style: TextStyle(fontSize: 18),
+        style: const TextStyle(fontSize: 18),
       ),
       const SizedBox(height: 16),
       CustomTextField(
@@ -109,6 +113,6 @@ class _VarsConfigState extends State<VarsConfig> {
       AppsScriptType.eanw,
       _eanwAutomationAppsScriptController.text,
     );
-    Utils.showSnackBar("URLs Updated", context);
+    SnackbarService.showSnackBar("URLs Updated", context);
   }
 }

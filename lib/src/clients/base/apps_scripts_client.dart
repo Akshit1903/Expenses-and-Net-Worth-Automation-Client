@@ -4,9 +4,22 @@ import 'package:expense_and_net_worth_automation/src/clients/home_server_client.
 import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+/// Result type for Apps Script API calls.
+///
+/// ARCH-2 FIX: Clients now return structured results instead of
+/// accepting BuildContext and showing snackbars directly. The UI
+/// layer is responsible for displaying messages.
+class AppsScriptResult {
+  final String? data;
+  final String? errorMessage;
+
+  const AppsScriptResult.success(this.data) : errorMessage = null;
+  const AppsScriptResult.failure(this.errorMessage) : data = null;
+
+  bool get isSuccess => errorMessage == null;
+}
 
 class AppsScriptsClient {
   final AppsScriptType _appsScriptType;
@@ -15,12 +28,19 @@ class AppsScriptsClient {
 
   AppsScriptsClient(this._appsScriptType) : _authService = getIt<AuthService>();
 
-  Future<String?> callAppsScripts(
+  /// Calls an Apps Script function and returns a structured result.
+  ///
+  /// ARCH-2: No longer accepts BuildContext. Returns [AppsScriptResult]
+  /// so the calling UI layer can handle success/error display.
+  ///
+  /// BUG-2 FIX: Replaced `assert(responseJson["done"])` with a proper
+  /// runtime check that works in release mode.
+  ///
+  /// SEC-3 FIX: Error messages are sanitized — raw exception strings
+  /// (which may contain tokens) are not exposed.
+  Future<AppsScriptResult> callAppsScripts(
     final String functionName,
     final List<dynamic> parameters,
-    BuildContext? context,
-    String? successMessage,
-    String? errorMessage,
   ) async {
     try {
       final host = await _homeServerClient.getHostName(_appsScriptType);
@@ -42,28 +62,32 @@ class AppsScriptsClient {
         if (responseJson["error"] != null &&
             responseJson["error"]["details"] != null) {
           String errorDetails = responseJson["error"]["details"].toString();
-          Utils.showSnackBar('Error: $errorDetails', context);
-          return null;
+          return AppsScriptResult.failure(
+              'Apps Script error: $errorDetails');
         }
-        assert(responseJson["done"] as bool);
+
+        // BUG-2 FIX: Runtime check instead of assert (stripped in release)
+        final bool isDone = responseJson["done"] as bool? ?? false;
+        if (!isDone) {
+          return const AppsScriptResult.failure(
+              'Apps Script execution did not complete');
+        }
+
         String result = responseJson["response"]["result"].toString();
-        if (context != null && context.mounted && successMessage != null) {
-          Utils.showSnackBar(successMessage, context);
-        }
-        return result;
+        return AppsScriptResult.success(result);
       } else {
-        if (context != null && context.mounted && errorMessage != null) {
-          Utils.showSnackBar(
-            '$errorMessage Status: ${response.statusCode.toString()}  Message: ${(response.reasonPhrase ?? "")}',
-            context,
-          );
-        }
+        return AppsScriptResult.failure(
+          'Request failed. Status: ${response.statusCode} '
+          'Message: ${response.reasonPhrase ?? ""}',
+        );
       }
     } catch (e) {
-      if (context != null && context.mounted) {
-        Utils.showSnackBar("Error: ${e.toString()}", context);
-      }
+      // SEC-3 FIX: Sanitize error message — don't expose raw exception
+      // which may contain bearer tokens or internal details
+      return AppsScriptResult.failure(
+        'An error occurred while calling $functionName. '
+        'Please check your connection and try again.',
+      );
     }
-    return null;
   }
 }

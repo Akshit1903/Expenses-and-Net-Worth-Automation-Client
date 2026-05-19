@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +10,12 @@ class AuthProvider extends ChangeNotifier {
   bool _isSigningIn = false;
   bool _isAuthenticated = false;
 
+  /// ARCH-6 FIX: Store the stream subscription so it can be cancelled
+  /// in [dispose] to prevent memory leaks if the provider is ever recreated.
+  late final StreamSubscription _userChangedSubscription;
+
   AuthProvider() : _authService = getIt<AuthService>() {
-    _authService.onUserChanged.listen((account) {
+    _userChangedSubscription = _authService.onUserChanged.listen((account) {
       _isAuthenticated = account != null;
       notifyListeners();
     });
@@ -48,5 +54,12 @@ class AuthProvider extends ChangeNotifier {
   void _setIsSigningIn(bool value) {
     _isSigningIn = value;
     notifyListeners();
+  }
+
+  /// ARCH-6 FIX: Cancel the stream subscription to prevent leaks.
+  @override
+  void dispose() {
+    _userChangedSubscription.cancel();
+    super.dispose();
   }
 }

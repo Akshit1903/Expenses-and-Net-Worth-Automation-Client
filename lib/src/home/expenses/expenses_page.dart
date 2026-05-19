@@ -9,8 +9,10 @@ import 'package:expense_and_net_worth_automation/src/config/dependency_injection
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/models/document_upload.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
+import 'package:expense_and_net_worth_automation/src/utils/pdf_service.dart';
+import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/upload_status.dart';
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/url_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,7 +49,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
     UploadDocument(id: 'PAYSLIP', title: 'Payslip', icon: Icons.receipt_long),
   ];
 
-  TextEditingController _spreadSheetUrlController = TextEditingController();
+  final TextEditingController _spreadSheetUrlController =
+      TextEditingController();
   final GoogleWorkspaceClient _googleWorkspaceClient =
       getIt<GoogleWorkspaceClient>();
   final EanwAppsScriptsClient _eanwAppsScriptsClient =
@@ -64,7 +67,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     });
 
     // Intent handling (kept from original)
-    void _setFilePath(List<SharedMediaFile> value) {
+    void setFilePath(List<SharedMediaFile> value) {
       if (value.length == 1 && value[0].path.split('.').last == 'csv') {
         setState(() {
           _csvFilePath = value[0].path;
@@ -72,20 +75,22 @@ class _ExpensesPageState extends State<ExpensesPage> {
       }
     }
 
-    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
-      _setFilePath(value);
-      Future.delayed(Duration(milliseconds: 0)).then((value) {
+    _intentSub =
+        ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+      setFilePath(value);
+      Future.delayed(Duration.zero).then((value) {
         // Need to check if can pop, or just handle it.
         // In the original code it popped, assuming it was a modal or pushed page.
         // Since this is now a tab, we probably shouldn't pop the whole app.
         // leaving as is for now but might need adjustment if this was intended to close a dialog.
       });
     }, onError: (err) {
-      Utils.showSnackBar("getIntentDataStream error: $err", context);
+      SnackbarService.showSnackBar(
+          "getIntentDataStream error: $err", context);
     });
 
     ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      _setFilePath(value);
+      setFilePath(value);
       ReceiveSharingIntent.instance.reset();
     });
   }
@@ -94,6 +99,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
   void dispose() {
     _intentSub.cancel();
     _spreadSheetUrlController.dispose();
+    // SEC-4 FIX: Clean up temp files created during document processing
+    PdfService.cleanupTempFiles();
     super.dispose();
   }
 
@@ -111,7 +118,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
   Future<void> _triggerAutomationButtonHandler() async {
     try {
-      if (_spreadSheetUrlController.text.isEmpty && !_csvFilePath.isEmpty) {
+      if (_spreadSheetUrlController.text.isEmpty && _csvFilePath.isNotEmpty) {
         setState(() {
           _isUploadingCSVToCreateSheet = true;
         });
@@ -122,28 +129,44 @@ class _ExpensesPageState extends State<ExpensesPage> {
           String spreadSheetId =
               jsonDecode(_createSpreadSheetByUploadingCSVFileResponse)['id'];
           _spreadSheetUrlController.text =
-              Utils.getGoogleSheetsUrl(spreadSheetId);
+              UrlUtils.getGoogleSheetsUrl(spreadSheetId);
           _isUploadingCSVToCreateSheet = false;
         });
       }
-      if (!_spreadSheetUrlController.text.isEmpty) {
+      if (_spreadSheetUrlController.text.isNotEmpty) {
         await Clipboard.setData(
             ClipboardData(text: _spreadSheetUrlController.text));
         String spreadSheetId =
-            Utils.extractSheetsId(_spreadSheetUrlController.text);
+            UrlUtils.extractSheetsId(_spreadSheetUrlController.text);
 
         setState(() {
           _isRunningAppsScriptAutomation = true;
         });
-        String? response = await _eanwAppsScriptsClient
-            .triggerExpenseAndNetWorthAutomationAppsScript(
-                spreadSheetId, context);
-        setState(() {
-          _appsScriptResponse = response;
-          _unprocessedTransactions =
-              _getUnprocessedTransactions(_appsScriptResponse);
-          _isRunningAppsScriptAutomation = false;
-        });
+
+        // ARCH-2 FIX: Handle AppsScriptResult from client
+        final result = await _eanwAppsScriptsClient
+            .triggerExpenseAndNetWorthAutomationAppsScript(spreadSheetId);
+
+        if (result.isSuccess) {
+          setState(() {
+            _appsScriptResponse = result.data;
+            _unprocessedTransactions =
+                _getUnprocessedTransactions(_appsScriptResponse);
+            _isRunningAppsScriptAutomation = false;
+          });
+          if (mounted) {
+            SnackbarService.showSnackBar(
+                'Automation script triggered successfully!', context);
+          }
+        } else {
+          setState(() {
+            _isRunningAppsScriptAutomation = false;
+          });
+          if (mounted) {
+            SnackbarService.showSnackBar(
+                result.errorMessage ?? 'Unknown error', context);
+          }
+        }
       }
 
       for (final UploadDocument document in documentsToUpload) {
@@ -155,7 +178,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
       }
       List<Future<void>> documentUploadFutures = [];
       for (final UploadDocument document in documentsToUpload) {
-        Future<void> resolveDoumentUploadFuture() async {
+        Future<void> resolveDocumentUploadFuture() async {
           // Check for Zip file
           setState(() {
             document.uploadStatus = UploadStatus.DECRYPTING;
@@ -164,22 +187,27 @@ class _ExpensesPageState extends State<ExpensesPage> {
             try {
               // Try to extract without password first
               final String extractedPdfPath =
-                  await Utils.extractPdfFromZip(document.path!);
+                  await PdfService.extractPdfFromZip(document.path!);
               document.path = extractedPdfPath;
             } catch (e) {
               // If failed, assume it needs password
               try {
-                String? password = await _configStateAppsScriptsClient
-                    .getDocumentPassword(document.id, context);
-                if (password == null || password.isEmpty) {
+                final passwordResult = await _configStateAppsScriptsClient
+                    .getDocumentPassword(document.id);
+                if (!passwordResult.isSuccess ||
+                    passwordResult.data == null ||
+                    passwordResult.data!.isEmpty) {
                   throw 'Password not found for zip';
                 }
-                document.path = await Utils.extractPdfFromZip(document.path!,
-                    password: password);
+                document.path = await PdfService.extractPdfFromZip(
+                    document.path!,
+                    password: passwordResult.data!);
               } catch (e) {
-                Utils.showSnackBar(
-                    'Failed to extract PDF from Zip for ${document.title}: $e',
-                    context);
+                if (mounted) {
+                  SnackbarService.showSnackBar(
+                      'Failed to extract PDF from Zip for ${document.title}: $e',
+                      context);
+                }
                 setState(() {
                   document.uploadStatus = UploadStatus.FAILURE;
                 });
@@ -187,18 +215,23 @@ class _ExpensesPageState extends State<ExpensesPage> {
               }
             }
           } else if (document.path!.toLowerCase().endsWith('.pdf') &&
-              await Utils.isPdfEncrypted(document.path!)) {
+              await PdfService.isPdfEncrypted(document.path!)) {
             try {
-              String? password = await _configStateAppsScriptsClient
-                  .getDocumentPassword(document.id, context);
-              if (password == null || password.isEmpty) {
+              final passwordResult = await _configStateAppsScriptsClient
+                  .getDocumentPassword(document.id);
+              if (!passwordResult.isSuccess ||
+                  passwordResult.data == null ||
+                  passwordResult.data!.isEmpty) {
                 throw 'Password not found';
               }
-              document.path =
-                  await Utils.getDecryptedPdf(document.path!, password);
+              document.path = await PdfService.getDecryptedPdf(
+                  document.path!, passwordResult.data!);
             } catch (e) {
-              Utils.showSnackBar(
-                  'Failed to decrypt PDF for ${document.title}: $e', context);
+              if (mounted) {
+                SnackbarService.showSnackBar(
+                    'Failed to decrypt PDF for ${document.title}: $e',
+                    context);
+              }
               setState(() {
                 document.uploadStatus = UploadStatus.FAILURE;
               });
@@ -209,16 +242,23 @@ class _ExpensesPageState extends State<ExpensesPage> {
           setState(() {
             document.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
           });
-          String? folderId = await _configStateAppsScriptsClient
-              .getDocumentFolderId(document.id, context);
-          if (folderId == null) {
+
+          // ARCH-2 FIX: Handle AppsScriptResult
+          final folderResult = await _configStateAppsScriptsClient
+              .getDocumentFolderId(document.id);
+          if (!folderResult.isSuccess ||
+              folderResult.data == null ||
+              folderResult.data!.isEmpty) {
             setState(() {
               document.uploadStatus = UploadStatus.FAILURE;
             });
-            Utils.showSnackBar(
-                'Folder ID not found for ${document.title}', context);
+            if (mounted) {
+              SnackbarService.showSnackBar(
+                  'Folder ID not found for ${document.title}', context);
+            }
             return;
           }
+
           setState(() {
             document.uploadStatus = UploadStatus.UPLOADING;
           });
@@ -226,30 +266,39 @@ class _ExpensesPageState extends State<ExpensesPage> {
           final oneMonthAgo = DateTime(
             now.year,
             now.month - 1,
-            now.day,
+            1, // BUG-3 analogy: use day=1 to avoid overflow
           );
-          document.uploadedFileId =
+
+          // ARCH-2 FIX: Handle WorkspaceResult
+          final uploadResult =
               await _googleWorkspaceClient.uploadDocumentToDrive(
                   path: document.path.toString(),
                   fileName: "${oneMonthAgo.year}-${oneMonthAgo.month}.pdf",
-                  folderId: folderId,
-                  context: context);
+                  folderId: folderResult.data!);
+
           setState(() {
-            if (document.uploadedFileId == null) {
-              document.uploadStatus = UploadStatus.FAILURE;
-            } else {
+            if (uploadResult.isSuccess) {
+              document.uploadedFileId = uploadResult.data;
               document.uploadStatus = UploadStatus.SUCCESS;
+            } else {
+              document.uploadStatus = UploadStatus.FAILURE;
+              if (mounted) {
+                SnackbarService.showSnackBar(
+                    uploadResult.errorMessage ?? 'Upload failed', context);
+              }
             }
           });
         }
 
         if (document.path != null) {
-          documentUploadFutures.add(resolveDoumentUploadFuture());
+          documentUploadFutures.add(resolveDocumentUploadFuture());
         }
       }
       await Future.wait(documentUploadFutures);
     } catch (e) {
-      Utils.showSnackBar('Error: ${e.toString()}', context);
+      if (mounted) {
+        SnackbarService.showSnackBar('Error: ${e.toString()}', context);
+      }
     }
   }
 
@@ -262,14 +311,18 @@ class _ExpensesPageState extends State<ExpensesPage> {
       File file = File(result.files.single.path!);
       String filePath = file.path;
       if (filePath.split('.').last != 'csv') {
-        Utils.showSnackBar('Invalid file type', context);
+        if (mounted) {
+          SnackbarService.showSnackBar('Invalid file type', context);
+        }
         return;
       }
       setState(() {
         _csvFilePath = filePath;
       });
     } else {
-      Utils.showSnackBar('No file selected', context);
+      if (mounted) {
+        SnackbarService.showSnackBar('No file selected', context);
+      }
     }
   }
 
@@ -280,7 +333,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
     if (result == null) {
       if (mounted) {
-        Utils.showSnackBar('No file selected for ${document.title}', context);
+        SnackbarService.showSnackBar(
+            'No file selected for ${document.title}', context);
       }
       return;
     }
@@ -290,10 +344,20 @@ class _ExpensesPageState extends State<ExpensesPage> {
     });
   }
 
+  /// SEC-5 FIX: Validate URL before launching to prevent
+  /// opening malicious or non-HTTPS URLs.
   Future<void> _launchSheet() async {
-    Uri url = Uri.parse(_spreadSheetUrlController.text);
+    final urlText = _spreadSheetUrlController.text;
+    if (!UrlUtils.isValidGoogleSheetsUrl(urlText)) {
+      SnackbarService.showSnackBar(
+          'Invalid URL. Only HTTPS Google URLs are allowed.', context);
+      return;
+    }
+    Uri url = Uri.parse(urlText);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      Utils.showSnackBar('Could not open the sheet', context);
+      if (mounted) {
+        SnackbarService.showSnackBar('Could not open the sheet', context);
+      }
     }
   }
 
@@ -306,9 +370,12 @@ class _ExpensesPageState extends State<ExpensesPage> {
       switch (uploadDocument.uploadStatus) {
         case UploadStatus.SUCCESS:
           String fileIdUrl =
-              Utils.resolveDriveFileUrl(uploadDocument.uploadedFileId);
+              UrlUtils.resolveDriveFileUrl(uploadDocument.uploadedFileId);
           await Clipboard.setData(ClipboardData(text: fileIdUrl));
-          Utils.showSnackBar('Drive file URL copied: $fileIdUrl', context);
+          if (mounted) {
+            SnackbarService.showSnackBar(
+                'Drive file URL copied: $fileIdUrl', context);
+          }
         case UploadStatus.NOT_INITIATED || UploadStatus.FAILURE:
           _pickDocument(uploadDocument);
           return;
@@ -472,7 +539,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                       controller: _spreadSheetUrlController),
                   const SizedBox(height: 8),
                   Text(
-                    "Sheets ID: ${Utils.extractSheetsId(_spreadSheetUrlController.text)}",
+                    "Sheets ID: ${UrlUtils.extractSheetsId(_spreadSheetUrlController.text)}",
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 16),
@@ -482,9 +549,9 @@ class _ExpensesPageState extends State<ExpensesPage> {
                       child: LinearProgressIndicator(),
                     ),
                   if (_isUploadingCSVToCreateSheet)
-                    Text("Creating sheet by uploading CSV file..."),
+                    const Text("Creating sheet by uploading CSV file..."),
                   if (_isRunningAppsScriptAutomation)
-                    Text("Parsing data using EANW automation..."),
+                    const Text("Parsing data using EANW automation..."),
                   ...documentsToUpload
                       .where((doc) => doc.uploadStatus == UploadStatus.QUEUED)
                       .map((doc) => Text("Queued ${doc.title}...")),
@@ -547,7 +614,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 if (_createSpreadSheetByUploadingCSVFileResponse != '{}') ...[
                   Text("Spreadsheet Response:",
                       style: Theme.of(context).textTheme.labelLarge),
-                  Container(
+                  SizedBox(
                       height: 150,
                       child: _getJsonWidget(
                           _createSpreadSheetByUploadingCSVFileResponse)),
@@ -562,7 +629,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                 if (_appsScriptResponse != '{}') ...[
                   Text("Apps Script Response:",
                       style: Theme.of(context).textTheme.labelLarge),
-                  Container(
+                  SizedBox(
                       height: 200,
                       child: _getJsonWidget(_appsScriptResponse ?? "{}")),
                 ],

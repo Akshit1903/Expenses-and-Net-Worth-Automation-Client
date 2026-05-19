@@ -1,7 +1,5 @@
-import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
-import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
 import 'package:expense_and_net_worth_automation/src/views/auth_page.dart';
 import 'package:flutter/material.dart';
@@ -11,14 +9,20 @@ import 'home/main_scaffold.dart';
 import 'settings/settings_controller.dart';
 
 /// The Widget that configures your application.
+///
+/// BUG-1 FIX: Removed FutureBuilder around silentSignIn() which caused
+/// infinite rebuilds on every navigation. Silent sign-in is now performed
+/// once in main().
+///
+/// ARCH-11 FIX: No longer holds a service reference in a StatelessWidget.
 class MyApp extends StatelessWidget {
-  MyApp({
+  const MyApp({
     super.key,
     required this.settingsController,
   });
 
   final SettingsController settingsController;
-  final AuthService _authService = getIt<AuthService>();
+
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
@@ -40,30 +44,19 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
-                return FutureBuilder(
-                    future: _authService.silentSignIn(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        if (authProvider.isAuthenticated == false) {
-                          return AuthPage();
-                        }
-                        switch (routeSettings.name) {
-                          case MainScaffold.routeName:
-                            return MainScaffold();
-                          case SettingsView.routeName:
-                            return SettingsView(controller: settingsController);
-                          case UnprocessedTransactionsPage.routeName:
-                            return UnprocessedTransactionsPage();
-                          default:
-                            return MainScaffold();
-                        }
-                      }
-                      return const Scaffold(
-                        body: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    });
+                if (!authProvider.isAuthenticated) {
+                  return const AuthPage();
+                }
+                switch (routeSettings.name) {
+                  case MainScaffold.routeName:
+                    return const MainScaffold();
+                  case SettingsView.routeName:
+                    return SettingsView(controller: settingsController);
+                  case UnprocessedTransactionsPage.routeName:
+                    return const UnprocessedTransactionsPage();
+                  default:
+                    return const MainScaffold();
+                }
               },
             );
           },

@@ -4,17 +4,20 @@ import 'package:flutter/services.dart';
 class CustomTextField extends StatefulWidget {
   final String hintText;
   final TextEditingController controller;
-  CustomTextField({
+
+  const CustomTextField({
     super.key,
     required this.hintText,
     required this.controller,
   });
+
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
 }
 
 class _CustomTextFieldState extends State<CustomTextField> {
   final _focusNode = FocusNode();
+
   Future<void> _pasteFromClipboard() async {
     final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
     if (clipboardData != null) {
@@ -22,25 +25,32 @@ class _CustomTextFieldState extends State<CustomTextField> {
     }
   }
 
+  /// ARCH-8 FIX: Dispose FocusNode to prevent resource leaks.
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return TextField(
       decoration: InputDecoration(
         hintText: widget.hintText,
-        border: OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
+        border: const OutlineInputBorder(),
+        focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.blue),
         ),
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.grey),
         ),
-        contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
         suffixIcon: IconButton(
           onPressed: () => setState(() {
             _pasteFromClipboard();
-            // FocusScope.of(context).requestFocus(_focusNode);
           }),
-          icon: Icon(Icons.paste),
+          icon: const Icon(Icons.paste),
         ),
       ),
       controller: widget.controller,

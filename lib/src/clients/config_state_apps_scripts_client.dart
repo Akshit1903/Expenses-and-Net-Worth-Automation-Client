@@ -1,37 +1,25 @@
 import 'package:expense_and_net_worth_automation/src/clients/base/apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dart';
-import 'package:expense_and_net_worth_automation/src/utils/utils.dart';
-import 'package:flutter/material.dart';
+import 'package:expense_and_net_worth_automation/src/utils/constants.dart';
 
+/// Client for the State/Config Apps Script backend.
+///
+/// ARCH-2 FIX: No longer accepts BuildContext. Returns [AppsScriptResult]
+/// for the UI layer to handle.
 class ConfigStateAppsScriptsClient extends AppsScriptsClient {
   ConfigStateAppsScriptsClient() : super(AppsScriptType.stateConfig);
 
-  Future<String?> getDocumentFolderId(
-      String documentId, BuildContext? context) async {
+  Future<AppsScriptResult> getDocumentFolderId(String documentId) async {
     return callAppsScripts(
-        "getAccountStatementFolderId",
-        [documentId],
-        context,
-        "Account statement folder ID retrieved successfully!",
-        "Error getting folder ID: $documentId");
+        "getAccountStatementFolderId", [documentId]);
   }
 
-  Future<String?> getAppsScriptClientUrl(BuildContext? context) async {
+  Future<AppsScriptResult> getAppsScriptClientUrl() async {
     return callAppsScripts(
-        "getAppsScriptClientUrl",
-        [Utils.EANW_AUTOMATION],
-        context,
-        "Apps script URL retrieved successfully!",
-        "Error getting apps script URL:");
+        "getAppsScriptClientUrl", [AppConstants.eanwAutomation]);
   }
 
-  Future<String?> getDocumentPassword(
-      String documentId, BuildContext? context) async {
-    return callAppsScripts(
-        "getDocumentPassword",
-        [documentId],
-        context,
-        "Document password retrieved successfully!",
-        "Error getting document password for: $documentId");
+  Future<AppsScriptResult> getDocumentPassword(String documentId) async {
+    return callAppsScripts("getDocumentPassword", [documentId]);
   }
 }
