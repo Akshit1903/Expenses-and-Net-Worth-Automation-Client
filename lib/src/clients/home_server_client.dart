@@ -34,7 +34,6 @@ class HomeServerClient {
       var headers = await _getRequestHeaders();
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        // {"host":"https://script.googleapis.com/v1/scripts/...","appsScriptType":"GymStats"}
         Map<String, dynamic> responseJson = jsonDecode(response.body);
         final String? host = responseJson["host"];
         if (host == null || host.isEmpty) {
@@ -48,6 +47,30 @@ class HomeServerClient {
       }
     } catch (e) {
       throw Exception("Error getting host name: ${e.toString()}");
+    }
+  }
+
+  /// Fetches the current journey state from the backend.
+  /// Returns the parsed 'data' field from the journey API response.
+  Future<Map<String, dynamic>> getJourney() async {
+    try {
+      final Uri uri = _getUri("/finance/journey");
+      final headers = await _getRequestHeaders();
+      final response = await http.get(uri, headers: headers);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = jsonDecode(response.body);
+        if (body['success'] == true && body['data'] != null) {
+          return body['data'] as Map<String, dynamic>;
+        }
+        throw Exception('Journey API returned success=false');
+      } else {
+        throw Exception(
+          'Failed to get journey. Status: ${response.statusCode}, '
+          'Message: ${response.reasonPhrase}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error fetching journey: ${e.toString()}');
     }
   }
 }

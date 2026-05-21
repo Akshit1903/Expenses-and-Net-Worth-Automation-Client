@@ -1,10 +1,15 @@
-import 'package:expense_and_net_worth_automation/src/home/expenses/expenses_page.dart';
-import 'package:expense_and_net_worth_automation/src/home/investment_page.dart';
+import 'package:expense_and_net_worth_automation/src/features/action/action_tab.dart';
+import 'package:expense_and_net_worth_automation/src/features/journey/journey_tab.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
+import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// Main scaffold with 2-tab navigation: Action (left) and Journey (right).
+///
+/// The AppBar title reflects the current in-progress step when on the
+/// Action tab, or "Finance" otherwise.
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
 
@@ -17,17 +22,7 @@ class MainScaffold extends StatefulWidget {
 class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    ExpensesPage(),
-    // NetWorthPage(),
-    InvestmentPage(),
-  ];
-
   void _onItemTapped(int index) {
-    if (index == _widgetOptions.length) {
-      Navigator.pushNamed(context, SettingsView.routeName);
-      return;
-    }
     setState(() {
       _selectedIndex = index;
     });
@@ -35,9 +30,21 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final journeyProvider = context.watch<JourneyProvider>();
+
+    // Dynamic AppBar title based on active tab and journey state
+    String appBarTitle;
+    if (_selectedIndex == 0) {
+      // Action tab: show in-progress step title, or "Finance" if complete
+      final inProgress = journeyProvider.inProgressStep;
+      appBarTitle = inProgress?.title ?? 'Finance';
+    } else {
+      appBarTitle = 'Journey';
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Finance'),
+        title: Text(appBarTitle),
         centerTitle: true,
         actions: [
           IconButton(
@@ -56,26 +63,26 @@ class _MainScaffoldState extends State<MainScaffold> {
           ),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [
+          ActionTab(),
+          JourneyTab(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: _onItemTapped,
         selectedIndex: _selectedIndex,
         destinations: const <Widget>[
           NavigationDestination(
-            icon: Icon(Icons.attach_money),
-            label: 'Expenses',
-          ),
-          // NavigationDestination(
-          //   icon: Icon(Icons.account_balance_wallet),
-          //   label: 'Net Worth',
-          // ),
-          NavigationDestination(
-            icon: Icon(Icons.show_chart),
-            label: 'Investment',
+            icon: Icon(Icons.play_arrow_outlined),
+            selectedIcon: Icon(Icons.play_arrow),
+            label: 'Action',
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(Icons.route_outlined),
+            selectedIcon: Icon(Icons.route),
+            label: 'Journey',
           ),
         ],
       ),

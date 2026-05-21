@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
+import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -26,9 +27,19 @@ Future<void> main() async {
 
     await getIt<AuthService>().silentSignIn();
 
-    runApp(ChangeNotifierProvider(
-        create: (context) => AuthProvider(),
-        child: MyApp(settingsController: settingsController)));
+    // Create the JourneyProvider and fetch initial state
+    final journeyProvider = JourneyProvider();
+
+    runApp(MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: journeyProvider),
+      ],
+      child: MyApp(settingsController: settingsController),
+    ));
+
+    // Fetch journey after app is running (non-blocking)
+    journeyProvider.fetchJourney();
   }, (error, stackTrace) {
     debugPrint('Uncaught error: $error');
     debugPrint('Stack trace: $stackTrace');
