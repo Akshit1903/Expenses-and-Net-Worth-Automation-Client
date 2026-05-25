@@ -7,8 +7,8 @@ import 'package:expense_and_net_worth_automation/src/services/auth_service.dart'
 import 'package:http/http.dart' as http;
 
 /// Result type for Apps Script API calls.
-class AppsScriptResult {
-  final String? data;
+class AppsScriptResult<T> {
+  final T? data;
   final String? errorMessage;
 
   const AppsScriptResult.success(this.data) : errorMessage = null;
@@ -23,7 +23,7 @@ class AppsScriptsClient {
   final HomeServerClient _homeServerClient = getIt<HomeServerClient>();
 
   AppsScriptsClient(this._appsScriptType);
-  Future<AppsScriptResult> callAppsScripts(
+  Future<AppsScriptResult<T>> callAppsScripts<T>(
     final String functionName,
     final List<dynamic> parameters,
   ) async {
@@ -47,8 +47,7 @@ class AppsScriptsClient {
         if (responseJson["error"] != null &&
             responseJson["error"]["details"] != null) {
           String errorDetails = responseJson["error"]["details"].toString();
-          return AppsScriptResult.failure(
-              'Apps Script error: $errorDetails');
+          return AppsScriptResult.failure('Apps Script error: $errorDetails');
         }
 
         final bool isDone = responseJson["done"] as bool? ?? false;
@@ -57,7 +56,7 @@ class AppsScriptsClient {
               'Apps Script execution did not complete');
         }
 
-        String result = responseJson["response"]["result"].toString();
+        T? result = responseJson["response"]["result"] as T?;
         return AppsScriptResult.success(result);
       } else {
         return AppsScriptResult.failure(

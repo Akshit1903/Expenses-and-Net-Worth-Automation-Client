@@ -3,19 +3,18 @@
 enum StepStatus {
   completed,
   inProgress,
-  notStarted;
+  pending;
 
-  /// Parses the API string (e.g., "COMPLETED") into an enum value.
   static StepStatus fromString(String value) {
     switch (value.toUpperCase()) {
       case 'COMPLETED':
         return StepStatus.completed;
       case 'IN_PROGRESS':
         return StepStatus.inProgress;
-      case 'NOT_STARTED':
-        return StepStatus.notStarted;
+      case 'PENDING':
+        return StepStatus.pending;
       default:
-        return StepStatus.notStarted;
+        return StepStatus.pending;
     }
   }
 }

@@ -5,17 +5,18 @@ import 'package:expense_and_net_worth_automation/src/utils/constants.dart';
 class ConfigStateAppsScriptsClient extends AppsScriptsClient {
   ConfigStateAppsScriptsClient() : super(AppsScriptType.stateConfig);
 
-  Future<AppsScriptResult> getDocumentFolderId(String documentId) async {
-    return callAppsScripts(
-        "getAccountStatementFolderId", [documentId]);
+  Future<AppsScriptResult<String>> getDocumentFolderId(
+      String documentId) async {
+    return callAppsScripts("getAccountStatementFolderId", [documentId]);
   }
 
-  Future<AppsScriptResult> getAppsScriptClientUrl() async {
+  Future<AppsScriptResult<String>> getAppsScriptClientUrl() async {
     return callAppsScripts(
         "getAppsScriptClientUrl", [AppConstants.eanwAutomation]);
   }
 
-  Future<AppsScriptResult> getDocumentPassword(String documentId) async {
+  Future<AppsScriptResult<String>> getDocumentPassword(
+      String documentId) async {
     return callAppsScripts("getDocumentPassword", [documentId]);
   }
 }

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/clients/google_workspace_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
-import 'package:expense_and_net_worth_automation/src/utils/url_utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,14 +13,11 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 /// ViewModel for the Automation Trigger card.
 ///
 /// Handles CSV file selection, spreadsheet creation, and Apps Script
-/// automation triggering. Extracted from the old expenses_page.dart.
 class AutomationTriggerViewModel extends ChangeNotifier {
   final VoidCallback onComplete;
 
-  final GoogleWorkspaceClient _workspaceClient =
-      getIt<GoogleWorkspaceClient>();
-  final EanwAppsScriptsClient _eanwClient =
-      getIt<EanwAppsScriptsClient>();
+  final GoogleWorkspaceClient _workspaceClient = getIt<GoogleWorkspaceClient>();
+  final EanwAppsScriptsClient _eanwClient = getIt<EanwAppsScriptsClient>();
 
   final TextEditingController spreadSheetUrlController =
       TextEditingController();
@@ -35,8 +32,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
 
   AutomationTriggerViewModel({required this.onComplete}) {
     // Listen for shared CSV files from other apps
-    _intentSub =
-        ReceiveSharingIntent.instance.getMediaStream().listen((value) {
+    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       if (value.length == 1 && value[0].path.split('.').last == 'csv') {
         csvFilePath = value[0].path;
         notifyListeners();
@@ -56,8 +52,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
 
   bool get canTrigger =>
       !isLoading &&
-      (csvFilePath.isNotEmpty ||
-          spreadSheetUrlController.text.isNotEmpty);
+      (csvFilePath.isNotEmpty || spreadSheetUrlController.text.isNotEmpty);
 
   /// Opens file picker for CSV files.
   Future<void> pickCSVFile() async {
@@ -82,7 +77,8 @@ class AutomationTriggerViewModel extends ChangeNotifier {
         final response = await _workspaceClient
             .createSpreadSheetByUploadingCSVFile(csvFilePath);
         final sheetId = jsonDecode(response)['id'] as String;
-        spreadSheetUrlController.text = UrlUtils.getGoogleSheetsUrl(sheetId);
+        spreadSheetUrlController.text =
+            TransformUtils.getGoogleSheetsUrl(sheetId);
         isUploadingCSV = false;
         notifyListeners();
       }
@@ -92,7 +88,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
         await Clipboard.setData(
             ClipboardData(text: spreadSheetUrlController.text));
         final sheetId =
-            UrlUtils.extractSheetsId(spreadSheetUrlController.text);
+            TransformUtils.extractSheetsId(spreadSheetUrlController.text);
 
         isRunningScript = true;
         notifyListeners();

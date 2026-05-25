@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/models/eanw_details.dart';
@@ -28,8 +26,7 @@ class EanwScriptViewModel extends ChangeNotifier {
       : validationResponse = _parseValidationResponse(step.context),
         workingEANWUploaded =
             step.context['workingEANWUploaded'] as bool? ?? false,
-        mainEANWUploaded =
-            step.context['mainEANWUploaded'] as bool? ?? false;
+        mainEANWUploaded = step.context['mainEANWUploaded'] as bool? ?? false;
 
   /// Parses the validationResponse from the step context map.
   static ValidationResponse? _parseValidationResponse(
@@ -51,8 +48,7 @@ class EanwScriptViewModel extends ChangeNotifier {
     try {
       final result = await _eanwClient.getWorkingEANWDetails();
       if (result.isSuccess && result.data != null) {
-        final json = jsonDecode(result.data!);
-        workingEanwDetails = EanwDetails.fromJson(json);
+        workingEanwDetails = EanwDetails.fromJson(result.data!);
       } else {
         workingDetailsError = result.errorMessage ?? 'Failed to load details';
       }

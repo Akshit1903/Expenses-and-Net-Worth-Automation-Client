@@ -5,8 +5,8 @@ import 'package:expense_and_net_worth_automation/src/models/document_upload.dart
 import 'package:expense_and_net_worth_automation/src/models/journey.dart';
 import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
+import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:expense_and_net_worth_automation/src/utils/upload_status.dart';
-import 'package:expense_and_net_worth_automation/src/utils/url_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -37,10 +37,9 @@ class _DocumentUploadViewState extends State<DocumentUploadView> {
   @override
   void initState() {
     super.initState();
-    final uploadStatus =
-        widget.step.context['isAccountStatementUploaded']
-                as Map<String, dynamic>? ??
-            {};
+    final uploadStatus = widget.step.context['isAccountStatementUploaded']
+            as Map<String, dynamic>? ??
+        {};
     _viewModel = DocumentUploadViewModel(
       isAccountStatementUploaded: uploadStatus,
       onUploadComplete: () {
@@ -66,7 +65,6 @@ class _DocumentUploadViewState extends State<DocumentUploadView> {
     if (widget.embedded) return body;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.step.title), centerTitle: true),
       body: body,
     );
   }
@@ -107,10 +105,10 @@ class _DocumentUploadViewState extends State<DocumentUploadView> {
               return Padding(
                 padding: const EdgeInsets.only(top: 16),
                 child: FilledButton.icon(
-                  onPressed: (!_viewModel.hasSelectedDocuments ||
-                          _viewModel.isLoading)
-                      ? null
-                      : _viewModel.uploadAllDocuments,
+                  onPressed:
+                      (!_viewModel.hasSelectedDocuments || _viewModel.isLoading)
+                          ? null
+                          : _viewModel.uploadAllDocuments,
                   icon: const Icon(Icons.cloud_upload),
                   label: const Text('Upload All'),
                   style: FilledButton.styleFrom(
@@ -193,7 +191,7 @@ class _DocumentUploadViewState extends State<DocumentUploadView> {
     switch (doc.uploadStatus) {
       case UploadStatus.SUCCESS:
         // Copy Drive URL to clipboard
-        final url = UrlUtils.resolveDriveFileUrl(doc.uploadedFileId);
+        final url = TransformUtils.resolveDriveFileUrl(doc.uploadedFileId);
         await Clipboard.setData(ClipboardData(text: url));
         if (mounted) {
           SnackbarService.showSnackBar('Drive URL copied', context);

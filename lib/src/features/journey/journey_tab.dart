@@ -57,14 +57,12 @@ class JourneyTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: Colors.green, size: 28),
+                  const Icon(Icons.check_circle, color: Colors.green, size: 28),
                   const SizedBox(width: 12),
                   Text(
                     'Journey Complete',
@@ -115,7 +113,7 @@ class _StepCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isNotStarted = step.stepStatus == StepStatus.notStarted;
+    final isNotStarted = step.stepStatus == StepStatus.pending;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -153,6 +151,7 @@ class _StepCard extends StatelessWidget {
                     : BorderSide(color: theme.colorScheme.outlineVariant),
               ),
               child: ListTile(
+                leading: Icon(StepRegistry.getIconForStep(step.id)),
                 enabled: !isNotStarted,
                 title: Text(
                   step.title,
@@ -164,15 +163,12 @@ class _StepCard extends StatelessWidget {
                 subtitle: Text(
                   _statusText,
                   style: TextStyle(
-                    color: isNotStarted
-                        ? theme.colorScheme.outline
-                        : _statusColor,
+                    color:
+                        isNotStarted ? theme.colorScheme.outline : _statusColor,
                     fontSize: 12,
                   ),
                 ),
-                trailing: isNotStarted
-                    ? null
-                    : const Icon(Icons.chevron_right),
+                trailing: isNotStarted ? null : const Icon(Icons.chevron_right),
                 onTap: isNotStarted ? null : () => _navigateToStep(context),
               ),
             ),
@@ -189,7 +185,7 @@ class _StepCard extends StatelessWidget {
       case StepStatus.inProgress:
         return Icon(Icons.play_circle_filled,
             color: theme.colorScheme.primary, size: 28);
-      case StepStatus.notStarted:
+      case StepStatus.pending:
         return Icon(Icons.circle_outlined,
             color: theme.colorScheme.outline, size: 28);
     }
@@ -201,7 +197,7 @@ class _StepCard extends StatelessWidget {
         return 'Completed';
       case StepStatus.inProgress:
         return 'In Progress';
-      case StepStatus.notStarted:
+      case StepStatus.pending:
         return 'Not Started';
     }
   }
@@ -212,7 +208,7 @@ class _StepCard extends StatelessWidget {
         return Colors.green;
       case StepStatus.inProgress:
         return Colors.amber.shade700;
-      case StepStatus.notStarted:
+      case StepStatus.pending:
         return Colors.grey;
     }
   }

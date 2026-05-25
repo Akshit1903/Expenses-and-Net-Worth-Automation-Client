@@ -77,7 +77,7 @@ class _SubmitSectionState extends State<SubmitSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Submit to Main Sheet',
+            Text('Commit Expenses and Net Worth ',
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 16),
@@ -91,7 +91,7 @@ class _SubmitSectionState extends State<SubmitSection> {
               ),
               const SizedBox(height: 8),
               _OperationRow(
-                title: 'Updating Finance Log',
+                title: 'Overwriting Net Worth and Updating Finance Log',
                 isComplete: _financeLogComplete,
                 isInProgress: _isSubmitting && !_financeLogComplete,
               ),
@@ -108,17 +108,9 @@ class _SubmitSectionState extends State<SubmitSection> {
 
             // Submit button
             FilledButton.icon(
-              onPressed: (widget.isEnabled && !_isSubmitting)
-                  ? _handleSubmit
-                  : null,
-              icon: _isSubmitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.publish),
+              onPressed:
+                  (widget.isEnabled && !_isSubmitting) ? _handleSubmit : null,
+              icon: const Icon(Icons.publish),
               label: Text(_isSubmitting ? 'Submitting...' : 'Submit'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -159,10 +151,14 @@ class _OperationRow extends StatelessWidget {
           else if (isComplete)
             const Icon(Icons.check_circle, color: Colors.green, size: 20)
           else
-            const Icon(Icons.circle_outlined,
-                color: Colors.grey, size: 20),
+            const Icon(Icons.circle_outlined, color: Colors.grey, size: 20),
           const SizedBox(width: 12),
-          Text(title),
+          Flexible(
+            child: Text(
+              title,
+              softWrap: true,
+            ),
+          ),
         ],
       ),
     );

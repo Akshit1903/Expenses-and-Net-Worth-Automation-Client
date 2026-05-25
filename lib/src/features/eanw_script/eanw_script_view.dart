@@ -68,7 +68,6 @@ class _EanwScriptViewState extends State<EanwScriptView> {
     if (widget.embedded) return body;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.step.title), centerTitle: true),
       body: body,
     );
   }
@@ -157,9 +156,7 @@ class _EanwScriptViewState extends State<EanwScriptView> {
           ),
           const SizedBox(width: 12),
           Text(
-            isSuccess
-                ? 'All validations passed'
-                : 'Some validations failed',
+            isSuccess ? 'All validations passed' : 'Some validations failed',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: isSuccess ? Colors.green : Colors.red,

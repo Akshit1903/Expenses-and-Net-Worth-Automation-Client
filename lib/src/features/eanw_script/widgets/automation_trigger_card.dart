@@ -4,7 +4,7 @@ import 'package:expense_and_net_worth_automation/src/features/eanw_script/automa
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
 import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
-import 'package:expense_and_net_worth_automation/src/utils/url_utils.dart';
+import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -90,8 +90,7 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Automation Trigger',
-                style: theme.textTheme.titleLarge),
+            Text('Automation Trigger', style: theme.textTheme.titleLarge),
             const SizedBox(height: 16),
 
             // CSV file picker
@@ -121,7 +120,7 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
             ),
             const SizedBox(height: 8),
             Text(
-              'Sheets ID: ${UrlUtils.extractSheetsId(vm.spreadSheetUrlController.text)}',
+              'Sheets ID: ${TransformUtils.extractSheetsId(vm.spreadSheetUrlController.text)}',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -153,8 +152,7 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
                         }
                       } catch (e) {
                         if (mounted) {
-                          SnackbarService.showSnackBar(
-                              'Error: $e', context);
+                          SnackbarService.showSnackBar('Error: $e', context);
                         }
                       }
                     }
@@ -198,7 +196,7 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
   }
 
   Future<void> _launchSheet(String urlText) async {
-    if (!UrlUtils.isValidGoogleSheetsUrl(urlText)) {
+    if (!TransformUtils.isValidGoogleSheetsUrl(urlText)) {
       SnackbarService.showSnackBar(
           'Invalid URL. Only HTTPS Google URLs are allowed.', context);
       return;

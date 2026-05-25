@@ -47,7 +47,7 @@ class EanwDetailsView extends StatelessWidget {
                     icon: Icons.trending_down,
                     color: theme.colorScheme.error,
                   ),
-                ),
+                )
               ],
             ),
             const SizedBox(height: 16),
@@ -91,8 +91,7 @@ class _HighlightCard extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
-            Text(label,
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(label, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 4),
             Text(
               value,

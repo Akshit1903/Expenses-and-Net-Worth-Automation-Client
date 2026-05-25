@@ -57,7 +57,7 @@ class ActionTab extends StatelessWidget {
 
     // Fallback: no step found (shouldn't happen with valid API data)
     return const Center(
-      child: Text('No actions pending'),
+      child: Text('No view matched for current step! Error in StepRegistry?'),
     );
   }
 }

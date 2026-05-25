@@ -37,7 +37,13 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
-                if (!authProvider.isAuthenticated) {
+                bool? isAuthenticated = authProvider.isAuthenticated;
+                if (isAuthenticated == null) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (!isAuthenticated) {
                   return const AuthPage();
                 }
                 switch (routeSettings.name) {

@@ -8,7 +8,7 @@ class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
 
   bool _isSigningIn = false;
-  bool _isAuthenticated = false;
+  bool? _isAuthenticated = null;
 
   late final StreamSubscription _userChangedSubscription;
 
@@ -17,9 +17,13 @@ class AuthProvider extends ChangeNotifier {
       _isAuthenticated = account != null;
       notifyListeners();
     });
+    _authService.isSignedIn().then((isSignedIn) {
+      _isAuthenticated = isSignedIn;
+      notifyListeners();
+    });
   }
 
-  bool get isAuthenticated => _isAuthenticated;
+  bool? get isAuthenticated => _isAuthenticated;
   bool get isSigningIn => _isSigningIn;
 
   Future<void> signIn() async {

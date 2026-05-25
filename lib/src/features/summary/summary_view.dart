@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/widgets/eanw_section_card.dart';
@@ -21,10 +19,11 @@ class SummaryView extends StatefulWidget {
 }
 
 class _SummaryViewState extends State<SummaryView> {
-  final EanwAppsScriptsClient _client = getIt<EanwAppsScriptsClient>();
+  final EanwAppsScriptsClient _eanwAppsScriptClient =
+      getIt<EanwAppsScriptsClient>();
 
   bool _isLoading = true;
-  EanwDetails? _eanwDetails;
+  EanwDetails? _mainEANWDetails;
   FinanceLog? _financeLog;
   String? _error;
 
@@ -43,18 +42,18 @@ class _SummaryViewState extends State<SummaryView> {
 
     try {
       final results = await Future.wait([
-        _client.getMainEANWDetails(),
-        _client.getLatestFinanceLog(),
+        _eanwAppsScriptClient.getMainEANWDetails(),
+        _eanwAppsScriptClient.getLatestFinanceLog(),
       ]);
 
-      final eanwResult = results[0];
-      final logResult = results[1];
+      final mainEANWResult = results[0];
+      final financeLogResult = results[1];
 
-      if (eanwResult.isSuccess && eanwResult.data != null) {
-        _eanwDetails = EanwDetails.fromJson(jsonDecode(eanwResult.data!));
+      if (mainEANWResult.isSuccess && mainEANWResult.data != null) {
+        _mainEANWDetails = EanwDetails.fromJson(mainEANWResult.data!);
       }
-      if (logResult.isSuccess && logResult.data != null) {
-        _financeLog = FinanceLog.fromJson(jsonDecode(logResult.data!));
+      if (financeLogResult.isSuccess && financeLogResult.data != null) {
+        _financeLog = FinanceLog.fromJson(financeLogResult.data!);
       }
     } catch (e) {
       _error = e.toString();
@@ -79,14 +78,12 @@ class _SummaryViewState extends State<SummaryView> {
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                  color: Colors.green.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle,
-                    color: Colors.green, size: 32),
+                const Icon(Icons.check_circle, color: Colors.green, size: 32),
                 const SizedBox(width: 12),
                 Text(
                   'Journey Complete',
@@ -124,7 +121,7 @@ class _SummaryViewState extends State<SummaryView> {
             ),
 
           // EANW Details section
-          if (_eanwDetails != null) ...[
+          if (_mainEANWDetails != null) ...[
             // Highlight cards
             Row(
               children: [
@@ -132,7 +129,7 @@ class _SummaryViewState extends State<SummaryView> {
                   child: _buildHighlightCard(
                     context,
                     'Growth',
-                    '₹${_eanwDetails!.growth}',
+                    '₹${_mainEANWDetails!.growth}',
                     Icons.trending_up,
                     Colors.green,
                   ),
@@ -142,7 +139,7 @@ class _SummaryViewState extends State<SummaryView> {
                   child: _buildHighlightCard(
                     context,
                     'Total Expenses',
-                    '₹${_eanwDetails!.totalExpenses}',
+                    '₹${_mainEANWDetails!.totalExpenses}',
                     Icons.trending_down,
                     theme.colorScheme.error,
                   ),
@@ -152,7 +149,7 @@ class _SummaryViewState extends State<SummaryView> {
             const SizedBox(height: 16),
 
             // Financial sections
-            ..._eanwDetails!.allSections.map((entry) => EanwSectionCard(
+            ..._mainEANWDetails!.allSections.map((entry) => EanwSectionCard(
                   title: entry.key,
                   section: entry.value,
                 )),
@@ -172,7 +169,7 @@ class _SummaryViewState extends State<SummaryView> {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               ..._financeLog!.month
-                  .map((g) => FinanceLogCard(group: g)),
+                  .map((g) => FinanceLogCard(financeLogGroup: g)),
             ],
 
             // Quarterly
@@ -182,7 +179,7 @@ class _SummaryViewState extends State<SummaryView> {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               ..._financeLog!.quarter
-                  .map((g) => FinanceLogCard(group: g)),
+                  .map((g) => FinanceLogCard(financeLogGroup: g)),
             ],
 
             // Yearly
@@ -192,7 +189,7 @@ class _SummaryViewState extends State<SummaryView> {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w600)),
               ..._financeLog!.year
-                  .map((g) => FinanceLogCard(group: g)),
+                  .map((g) => FinanceLogCard(financeLogGroup: g)),
             ],
           ],
         ],

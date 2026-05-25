@@ -1,4 +1,5 @@
 import 'package:expense_and_net_worth_automation/src/models/validation.dart';
+import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a single validation comparison with pass/fail styling.
@@ -62,17 +63,17 @@ class ValidationCard extends StatelessWidget {
                     _buildValueRow(
                       theme,
                       validation.sourceA,
-                      _formatNumber(validation.valueA),
+                      TransformUtils.formatMoneyNumber(validation.valueA),
                     ),
                     _buildValueRow(
                       theme,
                       validation.sourceB,
-                      _formatNumber(validation.valueB),
+                      TransformUtils.formatMoneyNumber(validation.valueB),
                     ),
                     if (!passed) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Difference: ₹${_formatNumber(diff)} '
+                        'Difference: ₹${TransformUtils.formatMoneyNumber(diff)} '
                         '(tolerance: ${validation.tolerance})',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.red,
@@ -103,13 +104,5 @@ class ValidationCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatNumber(double value) {
-    // Remove trailing zeros for cleaner display
-    if (value == value.roundToDouble()) {
-      return value.toStringAsFixed(0);
-    }
-    return value.toStringAsFixed(2);
   }
 }

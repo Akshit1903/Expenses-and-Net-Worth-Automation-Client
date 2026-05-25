@@ -1,4 +1,5 @@
 import 'package:expense_and_net_worth_automation/src/models/finance_log.dart';
+import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a single FinanceLogGroup as a card.
@@ -6,14 +7,14 @@ import 'package:flutter/material.dart';
 /// Shows group name as header, then metrics sorted by value descending.
 /// Percentage values are displayed without ₹ prefix.
 class FinanceLogCard extends StatelessWidget {
-  final FinanceLogGroup group;
+  final FinanceLogGroup financeLogGroup;
 
-  const FinanceLogCard({super.key, required this.group});
+  const FinanceLogCard({super.key, required this.financeLogGroup});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final sorted = group.sortedMetrics;
+    final sorted = financeLogGroup.sortedMetrics;
 
     return Card(
       elevation: 0,
@@ -30,7 +31,7 @@ class FinanceLogCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              group.name,
+              financeLogGroup.name,
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
@@ -67,15 +68,14 @@ class FinanceLogCard extends StatelessWidget {
 
   /// Formats the value: percentages shown as-is, others with ₹ prefix.
   String _formatValue(String key, String value) {
-    final isPercentage = key.contains('%') ||
-        key.contains('Increase') ||
-        key.contains('Growth');
+    final isPercentage = key.contains('%');
     if (isPercentage) {
       // Try to format as percentage
       final numVal = double.tryParse(value);
       if (numVal != null) return '${(numVal * 100).toStringAsFixed(2)}%';
       return value;
     }
+    value = TransformUtils.formatMoneyString(value);
     return '₹$value';
   }
 }
