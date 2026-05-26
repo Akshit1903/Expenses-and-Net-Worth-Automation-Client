@@ -47,13 +47,21 @@ class _MainScaffoldState extends State<MainScaffold> {
         title: Text(appBarTitle),
         centerTitle: true,
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, SettingsView.routeName);
-            },
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-          ),
+          if (journeyProvider.isLoading)
+            SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 5,
+                ))
+          else
+            IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, SettingsView.routeName);
+              },
+              icon: const Icon(Icons.settings),
+              tooltip: 'Settings',
+            ),
           IconButton(
             onPressed: () async {
               await context.read<AuthProvider>().signOut();

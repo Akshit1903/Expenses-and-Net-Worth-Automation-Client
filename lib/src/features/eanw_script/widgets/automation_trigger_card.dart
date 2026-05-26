@@ -105,10 +105,12 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
             if (vm.csvFilePath.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Selected: ${vm.csvFilePath.split(Platform.pathSeparator).last}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
+                child: FittedBox(
+                  child: Text(
+                    vm.csvFilePath.split(Platform.pathSeparator).last,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             const SizedBox(height: 16),
@@ -119,10 +121,14 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
               controller: vm.spreadSheetUrlController,
             ),
             const SizedBox(height: 8),
-            Text(
-              'Sheets ID: ${TransformUtils.extractSheetsId(vm.spreadSheetUrlController.text)}',
-              style: theme.textTheme.bodySmall,
-            ),
+            if (vm.spreadSheetUrlController.text.isNotEmpty)
+              FittedBox(
+                child: SelectableText(
+                  TransformUtils.extractSheetsId(
+                      vm.spreadSheetUrlController.text),
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
             const SizedBox(height: 16),
 
             // Loading indicators
@@ -146,10 +152,6 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
                   ? () async {
                       try {
                         await vm.triggerAutomation();
-                        if (mounted) {
-                          SnackbarService.showSnackBar(
-                              'Automation triggered successfully!', context);
-                        }
                       } catch (e) {
                         if (mounted) {
                           SnackbarService.showSnackBar('Error: $e', context);

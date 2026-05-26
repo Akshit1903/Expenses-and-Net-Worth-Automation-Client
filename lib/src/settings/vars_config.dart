@@ -2,7 +2,6 @@ import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dar
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/services/hosts_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/custom_text_field.dart';
-import 'package:expense_and_net_worth_automation/src/utils/dialog_utils.dart';
 import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
 import 'package:flutter/material.dart';
 
@@ -45,47 +44,34 @@ class _VarsConfigState extends State<VarsConfig> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (bool didPop, Object? result) async {
-        if (didPop) {
-          return;
-        }
-        final bool shouldPop =
-            await DialogUtils.showBackDialog(context) ?? false;
-        if (context.mounted && shouldPop) {
-          Navigator.pop(context);
-        }
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ..._buildURLFields(
-              "State Config Script URL", _stateConfigAppsScriptController),
-          ..._buildURLFields(
-              "EANW Script URL", _eanwAutomationAppsScriptController),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  await _saveURLs();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Save'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await _hostsService.refreshHosts();
-                },
-                child: const Text('Refresh'),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ..._buildURLFields(
+            "State Config Script URL", _stateConfigAppsScriptController),
+        ..._buildURLFields(
+            "EANW Script URL", _eanwAutomationAppsScriptController),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            ElevatedButton(
+              onPressed: () async {
+                await _saveURLs();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _hostsService.refreshHosts();
+              },
+              child: const Text('Refresh'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:expense_and_net_worth_automation/src/config/auth_config.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:expense_and_net_worth_automation/src/services/hosts_service.dart';
 import 'package:expense_and_net_worth_automation/src/services/prefs_service.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transaction_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -35,6 +36,10 @@ void setUpLocators() {
   });
   getIt.registerSingletonWithDependencies<HostsService>(
     () => HostsService(getIt<PrefsService>(), getIt<HomeServerClient>()),
+    dependsOn: [PrefsService],
+  );
+  getIt.registerSingletonWithDependencies<ExternalTransactionRepository>(
+    () => ExternalTransactionRepository(getIt<PrefsService>(), getIt<HomeServerClient>()),
     dependsOn: [PrefsService],
   );
 }

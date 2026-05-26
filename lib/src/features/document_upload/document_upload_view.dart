@@ -42,10 +42,7 @@ class _DocumentUploadViewState extends State<DocumentUploadView> {
         {};
     _viewModel = DocumentUploadViewModel(
       isAccountStatementUploaded: uploadStatus,
-      onUploadComplete: () {
-        // Refresh journey state after uploads
-        context.read<JourneyProvider>().fetchJourney();
-      },
+      journeyProvider: context.read<JourneyProvider>(),
     );
   }
 

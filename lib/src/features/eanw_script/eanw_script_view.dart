@@ -1,9 +1,12 @@
+import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/automation_trigger_viewmodel.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/eanw_script_viewmodel.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/widgets/automation_trigger_card.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/widgets/eanw_details_view.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/widgets/submit_section.dart';
 import 'package:expense_and_net_worth_automation/src/features/eanw_script/widgets/validation_section.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transaction_repository.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/models/journey.dart';
 import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/utils/snackbar_service.dart';
@@ -11,14 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// Main view for the EANW Script journey step.
-///
-/// Sections (top to bottom):
-/// 1. Validation status header (green/red banner)
-/// 2. Failed validations (collapsible, open by default)
-/// 3. Passed validations (collapsible, closed by default)
-/// 4. View Working EANW button (if workingEANWUploaded)
-/// 5. Automation Trigger card (always shown, highlighted if !workingEANWUploaded)
-/// 6. Submit section (enabled only when all validations pass)
 class EanwScriptView extends StatefulWidget {
   final JourneyStep step;
   final bool embedded;
@@ -34,6 +29,8 @@ class EanwScriptView extends StatefulWidget {
 }
 
 class _EanwScriptViewState extends State<EanwScriptView> {
+  final ExternalTransactionRepository _externalTxnRepository =
+      getIt<ExternalTransactionRepository>();
   late final EanwScriptViewModel _viewModel;
   late final AutomationTriggerViewModel _triggerViewModel;
 
@@ -81,6 +78,36 @@ class _EanwScriptViewState extends State<EanwScriptView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Error banner for fetching working details
+          if (_viewModel.workingDetailsError != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: MaterialBanner(
+                  backgroundColor: theme.colorScheme.errorContainer,
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  content: Text(
+                    _viewModel.workingDetailsError!,
+                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => _viewModel.fetchWorkingEANWDetails(),
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(
+                            color: theme.colorScheme.error,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // 1. Validation status banner
           if (vr != null) _buildValidationBanner(theme, vr.isSuccess),
 
@@ -102,8 +129,8 @@ class _EanwScriptViewState extends State<EanwScriptView> {
 
           const SizedBox(height: 8),
 
-          // 4. View Working EANW button
-          if (_viewModel.workingEANWUploaded) _buildWorkingEanwButton(context),
+          // 4. Manage External Transactions button
+          _buildManageExternalTransactionsButton(context),
 
           const SizedBox(height: 8),
 
@@ -115,11 +142,17 @@ class _EanwScriptViewState extends State<EanwScriptView> {
 
           const SizedBox(height: 8),
 
-          // 6. Submit section
+          // 6. View Working EANW button
+          if (_viewModel.workingEANWUploaded) _buildWorkingEanwButton(context),
+
+          const SizedBox(height: 4),
+
+          // 7. Submit section
           SubmitSection(
             isEnabled: _viewModel.allValidationsPassed,
             onSubmitComplete: () {
               context.read<JourneyProvider>().fetchJourney();
+              _externalTxnRepository.clear();
               if (mounted) {
                 SnackbarService.showSnackBar(
                     'Successfully submitted!', context);
@@ -199,6 +232,23 @@ class _EanwScriptViewState extends State<EanwScriptView> {
                       _viewModel.workingDetailsError!, context);
                 }
               },
+      ),
+    );
+  }
+
+  /// Button to manage external transactions.
+  Widget _buildManageExternalTransactionsButton(BuildContext context) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        leading: const Icon(Icons.swap_horiz, color: Colors.deepPurple),
+        title: const Text('Manage External Transactions'),
+        subtitle: const Text('Non-axio transactions'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.of(context).pushNamed(ExternalTransactionsPage.routeName);
+        },
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:expense_and_net_worth_automation/src/home/unprocessed_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/settings/settings_view.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transactions_page.dart';
 import 'package:expense_and_net_worth_automation/src/views/auth_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -53,6 +54,8 @@ class MyApp extends StatelessWidget {
                     return SettingsView(controller: settingsController);
                   case UnprocessedTransactionsPage.routeName:
                     return const UnprocessedTransactionsPage();
+                  case ExternalTransactionsPage.routeName:
+                    return const ExternalTransactionsPage();
                   default:
                     return const MainScaffold();
                 }

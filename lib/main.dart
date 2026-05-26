@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transaction_repository.dart';
 import 'package:expense_and_net_worth_automation/src/providers/auth_provider.dart';
 import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
@@ -21,11 +22,13 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load(fileName: ".env");
     setUpLocators();
+    await getIt.allReady();
 
     final settingsController = SettingsController(SettingsService());
     await settingsController.loadSettings();
 
     await getIt<AuthService>().silentSignIn();
+    await getIt<ExternalTransactionRepository>().initializeIfEmpty();
 
     // Create the JourneyProvider and fetch initial state
     final journeyProvider = JourneyProvider();

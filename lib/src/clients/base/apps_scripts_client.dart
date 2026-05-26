@@ -44,9 +44,8 @@ class AppsScriptsClient {
 
       if (response.statusCode == 200) {
         Map<String, dynamic> responseJson = jsonDecode(response.body);
-        if (responseJson["error"] != null &&
-            responseJson["error"]["details"] != null) {
-          String errorDetails = responseJson["error"]["details"].toString();
+        if (responseJson["error"] != null) {
+          String errorDetails = responseJson["error"].toString();
           return AppsScriptResult.failure('Apps Script error: $errorDetails');
         }
 
@@ -67,7 +66,7 @@ class AppsScriptsClient {
     } catch (e) {
       return AppsScriptResult.failure(
         'An error occurred while calling $functionName. '
-        'Please check your connection and try again.',
+        'Error: $e',
       );
     }
   }

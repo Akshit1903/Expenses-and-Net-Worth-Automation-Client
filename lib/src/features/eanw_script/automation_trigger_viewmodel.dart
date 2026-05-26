@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/clients/google_workspace_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transaction_repository.dart';
 import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,8 @@ class AutomationTriggerViewModel extends ChangeNotifier {
 
   final GoogleWorkspaceClient _workspaceClient = getIt<GoogleWorkspaceClient>();
   final EanwAppsScriptsClient _eanwClient = getIt<EanwAppsScriptsClient>();
+  final ExternalTransactionRepository _externalTxnRepository =
+      getIt<ExternalTransactionRepository>();
 
   final TextEditingController spreadSheetUrlController =
       TextEditingController();
@@ -93,12 +96,23 @@ class AutomationTriggerViewModel extends ChangeNotifier {
         isRunningScript = true;
         notifyListeners();
 
-        final result = await _eanwClient
-            .triggerExpenseAndNetWorthAutomationAppsScript(sheetId);
+        // Load external transactions from local storage
+        final txs = _externalTxnRepository.loadFromPrefs();
+        Map<String, dynamic> externalMeta = {
+          'externalTransactions':
+              txs.map((t) => t.toAppsScriptFormat()).toList(),
+        };
+
+        final result =
+            await _eanwClient.triggerExpenseAndNetWorthAutomationAppsScript(
+                sheetId, externalMeta);
 
         if (result.isSuccess && result.data != null) {
           appsScriptResponse = result.data;
           unprocessedTransactions = _parseUnprocessed(result.data!);
+        } else {
+          throw Exception(
+              result.errorMessage ?? 'Unknown error from Apps Script');
         }
 
         isRunningScript = false;

@@ -1,8 +1,8 @@
-
 import 'package:expense_and_net_worth_automation/src/clients/config_state_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/clients/google_workspace_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/models/document_upload.dart';
+import 'package:expense_and_net_worth_automation/src/providers/journey_provider.dart';
 import 'package:expense_and_net_worth_automation/src/utils/pdf_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/upload_status.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,9 +14,8 @@ import 'package:flutter/material.dart';
 /// Documents that are already uploaded (from journey context) are
 /// marked as SUCCESS and non-interactable.
 class DocumentUploadViewModel extends ChangeNotifier {
-  final VoidCallback onUploadComplete;
-  final GoogleWorkspaceClient _workspaceClient =
-      getIt<GoogleWorkspaceClient>();
+  final JourneyProvider _journeyProvider;
+  final GoogleWorkspaceClient _workspaceClient = getIt<GoogleWorkspaceClient>();
   final ConfigStateAppsScriptsClient _configClient =
       getIt<ConfigStateAppsScriptsClient>();
 
@@ -37,8 +36,8 @@ class DocumentUploadViewModel extends ChangeNotifier {
 
   DocumentUploadViewModel({
     required Map<String, dynamic> isAccountStatementUploaded,
-    required this.onUploadComplete,
-  }) {
+    required JourneyProvider journeyProvider,
+  }) : _journeyProvider = journeyProvider {
     // Mark already-uploaded documents as non-interactable
     for (final doc in documents) {
       if (isAccountStatementUploaded[doc.id] == true) {
@@ -101,7 +100,7 @@ class DocumentUploadViewModel extends ChangeNotifier {
 
     await Future.wait(futures);
 
-    onUploadComplete();
+    await _journeyProvider.fetchJourney();
     notifyListeners();
   }
 
@@ -117,8 +116,7 @@ class DocumentUploadViewModel extends ChangeNotifier {
       // Step 2: Resolve the Drive folder ID
       doc.uploadStatus = UploadStatus.RESOLVE_FOLDER_ID;
       notifyListeners();
-      final folderResult =
-          await _configClient.getDocumentFolderId(doc.id);
+      final folderResult = await _configClient.getDocumentFolderId(doc.id);
       if (!folderResult.isSuccess || folderResult.data == null) {
         throw 'Folder ID not found for ${doc.title}';
       }
@@ -130,7 +128,8 @@ class DocumentUploadViewModel extends ChangeNotifier {
       final prevMonth = DateTime(now.year, now.month - 1, 1);
       final uploadResult = await _workspaceClient.uploadDocumentToDrive(
         path: doc.path!,
-        fileName: '${prevMonth.year}-${prevMonth.month}.pdf',
+        fileName:
+            '${prevMonth.year}-${prevMonth.month.toString().padLeft(2, '0')}.pdf',
         folderId: folderResult.data!,
       );
 

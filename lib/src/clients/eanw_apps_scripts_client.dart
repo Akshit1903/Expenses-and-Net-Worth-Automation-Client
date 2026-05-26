@@ -8,9 +8,8 @@ class EanwAppsScriptsClient extends AppsScriptsClient {
   /// Triggers the main automation script with a spreadsheet ID.
   Future<AppsScriptResult<String>>
       triggerExpenseAndNetWorthAutomationAppsScript(
-          String spreadSheetId) async {
-    return await callAppsScripts(
-        "createRecurringExpensesSheet", [spreadSheetId]);
+          String spreadSheetId, Map<String, dynamic> externalMeta) async {
+    return await callAppsScripts("triggerEANW", [spreadSheetId, externalMeta]);
   }
 
   /// Fetches the working EANW sheet financial details.

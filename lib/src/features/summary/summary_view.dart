@@ -51,9 +51,14 @@ class _SummaryViewState extends State<SummaryView> {
 
       if (mainEANWResult.isSuccess && mainEANWResult.data != null) {
         _mainEANWDetails = EanwDetails.fromJson(mainEANWResult.data!);
+      } else {
+        throw mainEANWResult.errorMessage ?? 'Failed to fetch Main EANW Details';
       }
+
       if (financeLogResult.isSuccess && financeLogResult.data != null) {
         _financeLog = FinanceLog.fromJson(financeLogResult.data!);
+      } else {
+        throw financeLogResult.errorMessage ?? 'Failed to fetch latest Finance Log';
       }
     } catch (e) {
       _error = e.toString();
@@ -103,20 +108,30 @@ class _SummaryViewState extends State<SummaryView> {
               child: Center(child: CircularProgressIndicator()),
             ),
 
-          // Error state
+          // Error state (Premium MaterialBanner)
           if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                children: [
-                  Text(_error!,
-                      style: TextStyle(color: theme.colorScheme.error)),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: _fetchSummaryData,
-                    child: const Text('Retry'),
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: MaterialBanner(
+                  backgroundColor: theme.colorScheme.errorContainer,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  content: Text(
+                    _error!,
+                    style: TextStyle(color: theme.colorScheme.onErrorContainer),
                   ),
-                ],
+                  actions: [
+                    TextButton(
+                      onPressed: _fetchSummaryData,
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
