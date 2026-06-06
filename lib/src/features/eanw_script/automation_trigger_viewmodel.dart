@@ -5,6 +5,7 @@ import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_c
 import 'package:expense_and_net_worth_automation/src/clients/google_workspace_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/features/external_transactions/external_transaction_repository.dart';
+import 'package:expense_and_net_worth_automation/src/services/prefs_service.dart';
 import 'package:expense_and_net_worth_automation/src/utils/transform_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
   final EanwAppsScriptsClient _eanwClient = getIt<EanwAppsScriptsClient>();
   final ExternalTransactionRepository _externalTxnRepository =
       getIt<ExternalTransactionRepository>();
+  final PrefsService _prefsService = getIt<PrefsService>();
 
   final TextEditingController spreadSheetUrlController =
       TextEditingController();
@@ -35,6 +37,13 @@ class AutomationTriggerViewModel extends ChangeNotifier {
 
   AutomationTriggerViewModel({required this.onComplete}) {
     spreadSheetUrlController.addListener(notifyListeners);
+    spreadSheetUrlController.addListener(_onWorkingEANWUrlChanged);
+
+    final cachedId = _prefsService.getWorkingEANWSheetsId();
+    if (cachedId != null && cachedId.isNotEmpty) {
+      spreadSheetUrlController.text =
+          TransformUtils.getGoogleSheetsUrl(cachedId);
+    }
 
     // Listen for shared CSV files from other apps
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
@@ -51,6 +60,16 @@ class AutomationTriggerViewModel extends ChangeNotifier {
       }
       ReceiveSharingIntent.instance.reset();
     });
+  }
+
+  void _onWorkingEANWUrlChanged() {
+    final text = spreadSheetUrlController.text;
+    final sheetId = TransformUtils.extractSheetsId(text);
+    if (sheetId.isNotEmpty) {
+      _prefsService.setWorkingEANWSheetsId(sheetId);
+    } else if (text.isEmpty) {
+      _prefsService.removeWorkingEANWSheetsId();
+    }
   }
 
   bool get isLoading => isUploadingCSV || isRunningScript;
@@ -136,8 +155,9 @@ class AutomationTriggerViewModel extends ChangeNotifier {
       final rows = json['unprocessedTransactions'] as List?;
       if (rows == null) return [];
       return rows
-          .map<List<String>>(
-              (r) => (r as List).map<String>((i) => i == null ? '' : i.toString()).toList())
+          .map<List<String>>((r) => (r as List)
+              .map<String>((i) => i == null ? '' : i.toString())
+              .toList())
           .toList();
     } catch (_) {
       return [];
@@ -147,6 +167,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _intentSub?.cancel();
+    spreadSheetUrlController.removeListener(_onWorkingEANWUrlChanged);
     spreadSheetUrlController.removeListener(notifyListeners);
     spreadSheetUrlController.dispose();
     super.dispose();

@@ -13,13 +13,15 @@ class EanwAppsScriptsClient extends AppsScriptsClient {
   }
 
   /// Fetches the working EANW sheet financial details.
-  Future<AppsScriptResult<Map<String, dynamic>>> getWorkingEANWDetails() async {
-    return await callAppsScripts("getWorkingEANWDetails", []);
+  Future<AppsScriptResult<Map<String, dynamic>>> getWorkingEANWDetails(
+      String spreadSheetId) async {
+    return await callAppsScripts("getWorkingEANWDetails", [spreadSheetId]);
   }
 
   /// Copies the working EANW sheet to the main sheet.
-  Future<AppsScriptResult<Null>> copyEANWToMainSheet() async {
-    return await callAppsScripts("copyEANWToMainSheet", []);
+  Future<AppsScriptResult<Null>> copyEANWToMainSheet(
+      String spreadSheetId) async {
+    return await callAppsScripts("copyEANWToMainSheet", [spreadSheetId]);
   }
 
   /// Fetches the main EANW sheet financial details.

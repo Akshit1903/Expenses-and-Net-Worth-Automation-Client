@@ -3,6 +3,7 @@ import 'package:expense_and_net_worth_automation/src/config/dependency_injection
 import 'package:expense_and_net_worth_automation/src/models/eanw_details.dart';
 import 'package:expense_and_net_worth_automation/src/models/journey.dart';
 import 'package:expense_and_net_worth_automation/src/models/validation.dart';
+import 'package:expense_and_net_worth_automation/src/services/prefs_service.dart';
 import 'package:flutter/material.dart';
 
 /// ViewModel for the EANW Script journey step.
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 /// from the step context. Manages working EANW details fetching.
 class EanwScriptViewModel extends ChangeNotifier {
   final EanwAppsScriptsClient _eanwClient = getIt<EanwAppsScriptsClient>();
+  final PrefsService _prefsService = getIt<PrefsService>();
 
   /// Parsed from step context.
   ValidationResponse? validationResponse;
@@ -28,8 +30,7 @@ class EanwScriptViewModel extends ChangeNotifier {
 
   void updateStep(JourneyStep step) {
     validationResponse = _parseValidationResponse(step.context);
-    workingEANWUploaded =
-        step.context['workingEANWUploaded'] as bool? ?? false;
+    workingEANWUploaded = step.context['workingEANWUploaded'] as bool? ?? false;
     mainEANWUploaded = step.context['mainEANWUploaded'] as bool? ?? false;
     notifyListeners();
   }
@@ -52,7 +53,12 @@ class EanwScriptViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _eanwClient.getWorkingEANWDetails();
+      final workingEANWSheetsId = _prefsService.getWorkingEANWSheetsId() ?? '';
+      if (workingEANWSheetsId.isEmpty) {
+        throw Exception('Spreadsheet ID not found in preferences.');
+      }
+      final result =
+          await _eanwClient.getWorkingEANWDetails(workingEANWSheetsId);
       if (result.isSuccess && result.data != null) {
         workingEanwDetails = EanwDetails.fromJson(result.data!);
       } else {

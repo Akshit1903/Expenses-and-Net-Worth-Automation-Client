@@ -1,5 +1,6 @@
 import 'package:expense_and_net_worth_automation/src/clients/eanw_apps_scripts_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/services/prefs_service.dart';
 import 'package:flutter/material.dart';
 
 /// Submit section that runs two parallel operations with loading indicators.
@@ -25,6 +26,7 @@ class SubmitSection extends StatefulWidget {
 
 class _SubmitSectionState extends State<SubmitSection> {
   final EanwAppsScriptsClient _client = getIt<EanwAppsScriptsClient>();
+  final PrefsService _prefsService = getIt<PrefsService>();
 
   bool _isSubmitting = false;
   bool _copyComplete = false;
@@ -32,6 +34,13 @@ class _SubmitSectionState extends State<SubmitSection> {
   String? _error;
 
   Future<void> _handleSubmit() async {
+    final workingEANWSheetsId = _prefsService.getWorkingEANWSheetsId() ?? '';
+    if (workingEANWSheetsId.isEmpty) {
+      setState(() =>
+          _error = 'Working EANW Spreadsheet ID not found in preferences.');
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _copyComplete = false;
@@ -40,17 +49,16 @@ class _SubmitSectionState extends State<SubmitSection> {
     });
 
     try {
-      // Run both operations in parallel
-      await Future.wait([
-        _client.copyEANWToMainSheet().then((result) {
-          if (!result.isSuccess) throw result.errorMessage ?? 'Copy failed';
-          setState(() => _copyComplete = true);
-        }),
-        _client.overwriteNetWorthAndUpdateEANWFinanceLog().then((result) {
-          if (!result.isSuccess) throw result.errorMessage ?? 'Update failed';
-          setState(() => _financeLogComplete = true);
-        }),
-      ]);
+      await _client.copyEANWToMainSheet(workingEANWSheetsId).then((result) {
+        if (!result.isSuccess) throw result.errorMessage ?? 'Copy failed';
+        setState(() => _copyComplete = true);
+      });
+      await _client.overwriteNetWorthAndUpdateEANWFinanceLog().then((result) {
+        if (!result.isSuccess) throw result.errorMessage ?? 'Update failed';
+        setState(() => _financeLogComplete = true);
+      });
+      // Both succeeded → clear sheet ID from preferences
+      await _prefsService.removeWorkingEANWSheetsId();
 
       // Both succeeded → notify parent
       widget.onSubmitComplete();
