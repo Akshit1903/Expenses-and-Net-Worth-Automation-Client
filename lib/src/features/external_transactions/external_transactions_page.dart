@@ -181,7 +181,7 @@ class _ExternalTransactionsPageState extends State<ExternalTransactionsPage> {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      tx.account,
+                                      tx.category,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -209,7 +209,7 @@ class _ExternalTransactionsPageState extends State<ExternalTransactionsPage> {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        tx.category,
+                                        tx.account,
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: theme
