@@ -73,8 +73,7 @@ class ValidationCard extends StatelessWidget {
                     if (!passed) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Difference: ₹${TransformUtils.formatMoneyNumber(diff)} '
-                        '(tolerance: ${validation.tolerance})',
+                        'Difference: ₹${TransformUtils.formatMoneyNumber(diff)} ',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.red,
                           fontWeight: FontWeight.w500,
