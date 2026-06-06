@@ -181,9 +181,7 @@ class _AutomationTriggerCardState extends State<AutomationTriggerCard>
               FilledButton.tonal(
                 onPressed: () => Navigator.of(context).pushNamed(
                   UnprocessedTransactionsPage.routeName,
-                  arguments: vm.unprocessedTransactions.length > 1
-                      ? vm.unprocessedTransactions.sublist(1)
-                      : vm.unprocessedTransactions,
+                  arguments: vm.unprocessedTransactions,
                 ),
                 child: Text(
                   'View Unprocessed Transactions '

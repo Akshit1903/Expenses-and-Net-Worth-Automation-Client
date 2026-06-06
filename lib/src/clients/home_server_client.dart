@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:expense_and_net_worth_automation/src/config/apps_script_type.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
+import 'package:expense_and_net_worth_automation/src/models/transaction.dart';
 import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-
-import 'package:expense_and_net_worth_automation/src/models/transaction.dart';
 
 class HomeServerClient {
   final AuthService _authService;
@@ -15,20 +14,6 @@ class HomeServerClient {
         _authService = getIt<AuthService>();
 
   final String _host;
-
-  Uri _getUri(String endpoint) {
-    return Uri.https(_host, endpoint);
-  }
-
-  Future<Map<String, String>> _getRequestHeaders() async {
-    final accessToken = await _authService.getAccessToken();
-    final idToken = await _authService.getIDToken();
-    return {
-      'Authorization': "Bearer $idToken",
-      'X-ACCESS-TOKEN': accessToken,
-      'Content-Type': 'application/json',
-    };
-  }
 
   Future<String> getHostName(AppsScriptType appsScriptType) async {
     try {
@@ -100,5 +85,19 @@ class HomeServerClient {
     } catch (e) {
       throw Exception('Error fetching external transactions: ${e.toString()}');
     }
+  }
+
+  Uri _getUri(String endpoint) {
+    return Uri.https(_host, endpoint);
+  }
+
+  Future<Map<String, String>> _getRequestHeaders() async {
+    final accessToken = await _authService.getAccessToken();
+    final idToken = await _authService.getIDToken();
+    return {
+      'Authorization': "Bearer $idToken",
+      'X-ACCESS-TOKEN': accessToken,
+      'Content-Type': 'application/json',
+    };
   }
 }

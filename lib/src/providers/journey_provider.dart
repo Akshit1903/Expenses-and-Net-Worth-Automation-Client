@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:expense_and_net_worth_automation/src/clients/home_server_client.dart';
 import 'package:expense_and_net_worth_automation/src/config/dependency_injection.dart';
 import 'package:expense_and_net_worth_automation/src/models/journey.dart';
+import 'package:expense_and_net_worth_automation/src/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 /// Central state management for the finance journey.
@@ -11,10 +14,30 @@ import 'package:flutter/material.dart';
 /// - Manual refresh from journey tab
 class JourneyProvider extends ChangeNotifier {
   final HomeServerClient _homeServerClient = getIt<HomeServerClient>();
+  final AuthService _authService = getIt<AuthService>();
 
   Journey? _journey;
   bool _isLoading = false;
   String? _error;
+  StreamSubscription? _authSub;
+
+  JourneyProvider() {
+    _authSub = _authService.onUserChanged.listen((account) {
+      if (account != null) {
+        fetchJourney();
+      } else {
+        _journey = null;
+        _error = null;
+        notifyListeners();
+      }
+    });
+
+    _authService.isSignedIn().then((signedIn) {
+      if (signedIn) {
+        fetchJourney();
+      }
+    });
+  }
 
   Journey? get journey => _journey;
   bool get isLoading => _isLoading;
@@ -45,5 +68,11 @@ class JourneyProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }

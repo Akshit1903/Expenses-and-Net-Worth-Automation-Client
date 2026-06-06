@@ -115,66 +115,63 @@ class _StepCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isNotStarted = step.stepStatus == StepStatus.pending;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Stepper rail: icon + connecting line
-          Column(
-            children: [
-              _buildStatusIcon(theme),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 40,
-                  color: step.stepStatus == StepStatus.completed
-                      ? Colors.green
-                      : theme.colorScheme.outlineVariant,
-                ),
-            ],
-          ),
-          const SizedBox(width: 12),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Stepper rail: icon + connecting line
+        Column(
+          children: [
+            _buildStatusIcon(theme),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 60,
+                color: step.stepStatus == StepStatus.completed
+                    ? Colors.green
+                    : theme.colorScheme.outlineVariant,
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
 
-          // Step content card
-          Expanded(
-            child: Card(
-              elevation: 0,
-              color: isNotStarted
-                  ? theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.15)
-                  : null,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: step.stepStatus == StepStatus.inProgress
-                    ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
-                    : BorderSide(color: theme.colorScheme.outlineVariant),
-              ),
-              child: ListTile(
-                leading: Icon(StepRegistry.getIconForStep(step.id)),
-                enabled: !isNotStarted,
-                title: Text(
-                  step.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: isNotStarted ? theme.colorScheme.outline : null,
-                  ),
+        // Step content card
+        Expanded(
+          child: Card(
+            elevation: 0,
+            color: isNotStarted
+                ? theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.15)
+                : null,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: step.stepStatus == StepStatus.inProgress
+                  ? BorderSide(color: theme.colorScheme.primary, width: 1.5)
+                  : BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: ListTile(
+              leading: Icon(StepRegistry.getIconForStep(step.id)),
+              enabled: !isNotStarted,
+              title: Text(
+                step.title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isNotStarted ? theme.colorScheme.outline : null,
                 ),
-                subtitle: Text(
-                  _statusText,
-                  style: TextStyle(
-                    color:
-                        isNotStarted ? theme.colorScheme.outline : _statusColor,
-                    fontSize: 12,
-                  ),
-                ),
-                trailing: isNotStarted ? null : const Icon(Icons.chevron_right),
-                onTap: isNotStarted ? null : () => _navigateToStep(context),
               ),
+              subtitle: Text(
+                _statusText,
+                style: TextStyle(
+                  color:
+                      isNotStarted ? theme.colorScheme.outline : _statusColor,
+                  fontSize: 12,
+                ),
+              ),
+              trailing: isNotStarted ? null : const Icon(Icons.chevron_right),
+              onTap: isNotStarted ? null : () => _navigateToStep(context),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

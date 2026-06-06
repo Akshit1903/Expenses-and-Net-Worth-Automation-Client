@@ -34,6 +34,8 @@ class AutomationTriggerViewModel extends ChangeNotifier {
   StreamSubscription? _intentSub;
 
   AutomationTriggerViewModel({required this.onComplete}) {
+    spreadSheetUrlController.addListener(notifyListeners);
+
     // Listen for shared CSV files from other apps
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) {
       if (value.length == 1 && value[0].path.split('.').last == 'csv') {
@@ -135,7 +137,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
       if (rows == null) return [];
       return rows
           .map<List<String>>(
-              (r) => (r as List).map<String>((i) => i.toString()).toList())
+              (r) => (r as List).map<String>((i) => i == null ? '' : i.toString()).toList())
           .toList();
     } catch (_) {
       return [];
@@ -145,6 +147,7 @@ class AutomationTriggerViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _intentSub?.cancel();
+    spreadSheetUrlController.removeListener(notifyListeners);
     spreadSheetUrlController.dispose();
     super.dispose();
   }

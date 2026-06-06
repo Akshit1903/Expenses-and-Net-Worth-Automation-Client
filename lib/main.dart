@@ -40,9 +40,6 @@ Future<void> main() async {
       ],
       child: MyApp(settingsController: settingsController),
     ));
-
-    // Fetch journey after app is running (non-blocking)
-    journeyProvider.fetchJourney();
   }, (error, stackTrace) {
     debugPrint('Uncaught error: $error');
     debugPrint('Stack trace: $stackTrace');

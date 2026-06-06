@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:intl/intl.dart';
 
 class UnprocessedTransactionsPage extends StatelessWidget {
@@ -43,27 +42,28 @@ class UnprocessedTransactionsPage extends StatelessWidget {
         itemBuilder: (context, index) {
           final unprocessedTransaction = unprocessedTransactions[index];
 
-          // Guard against malformed data with fewer than expected fields
-          if (unprocessedTransaction.length < 11) {
+          final String issue;
+          final String amount;
+          final String drCr;
+          final String account;
+          final String expense;
+          final String income;
+          final String category;
+
+          if (unprocessedTransaction.length >= 8) {
+            amount = unprocessedTransaction[0];
+            drCr = unprocessedTransaction[1];
+            account = unprocessedTransaction[2];
+            expense = unprocessedTransaction[3];
+            income = unprocessedTransaction[4];
+            category = unprocessedTransaction[5];
+            issue = unprocessedTransaction[7];
+          } else {
             return ListTile(
               title: Text('Malformed transaction at index $index'),
               subtitle: Text(unprocessedTransaction.join(', ')),
             );
           }
-
-          final [
-            issue,
-            time,
-            place,
-            amount,
-            drCr,
-            account,
-            expense,
-            income,
-            category,
-            tags,
-            note,
-          ] = unprocessedTransaction;
           return ListTile(
               leading: CircleAvatar(
                 backgroundColor: (expense == "Yes" || income == "Yes")

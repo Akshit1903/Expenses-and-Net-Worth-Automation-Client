@@ -13,20 +13,26 @@ class EanwScriptViewModel extends ChangeNotifier {
   final EanwAppsScriptsClient _eanwClient = getIt<EanwAppsScriptsClient>();
 
   /// Parsed from step context.
-  final ValidationResponse? validationResponse;
-  final bool workingEANWUploaded;
-  final bool mainEANWUploaded;
+  ValidationResponse? validationResponse;
+  bool workingEANWUploaded = false;
+  bool mainEANWUploaded = false;
 
   /// Fetched on demand when user taps "View Working EANW".
   EanwDetails? workingEanwDetails;
   bool isLoadingWorkingDetails = false;
   String? workingDetailsError;
 
-  EanwScriptViewModel({required JourneyStep step})
-      : validationResponse = _parseValidationResponse(step.context),
-        workingEANWUploaded =
-            step.context['workingEANWUploaded'] as bool? ?? false,
-        mainEANWUploaded = step.context['mainEANWUploaded'] as bool? ?? false;
+  EanwScriptViewModel({required JourneyStep step}) {
+    updateStep(step);
+  }
+
+  void updateStep(JourneyStep step) {
+    validationResponse = _parseValidationResponse(step.context);
+    workingEANWUploaded =
+        step.context['workingEANWUploaded'] as bool? ?? false;
+    mainEANWUploaded = step.context['mainEANWUploaded'] as bool? ?? false;
+    notifyListeners();
+  }
 
   /// Parses the validationResponse from the step context map.
   static ValidationResponse? _parseValidationResponse(

@@ -46,6 +46,14 @@ class _EanwScriptViewState extends State<EanwScriptView> {
   }
 
   @override
+  void didUpdateWidget(covariant EanwScriptView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.step != oldWidget.step) {
+      _viewModel.updateStep(widget.step);
+    }
+  }
+
+  @override
   void dispose() {
     _viewModel.dispose();
     _triggerViewModel.dispose();
@@ -247,6 +255,7 @@ class _EanwScriptViewState extends State<EanwScriptView> {
         subtitle: const Text('Non-axio transactions'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
+          FocusScope.of(context).unfocus();
           Navigator.of(context).pushNamed(ExternalTransactionsPage.routeName);
         },
       ),
